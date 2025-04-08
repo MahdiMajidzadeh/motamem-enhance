@@ -7,6 +7,7 @@ const storageKey = 'motamemTrackedArticles';
 let previewTimeout;
 let previewPopup;
 let currentPreviewUrl = null;
+const previewCache = {};
 
 // --- Article Tracking Buttons ---
 
@@ -118,22 +119,28 @@ function createPreviewPopup() {
 function showPreview(event) {
     const link = event.target.closest('a');
     if (!link || !link.href || !link.href.startsWith('https://motamem.org/') || link.href === window.location.href) {
-         // Don't preview non-motamem links or links to the current page
         return;
     }
 
-     // Debounce: Clear any existing timeout to fetch preview
-     clearTimeout(previewTimeout);
-     currentPreviewUrl = link.href; // Store the URL we are about to preview
+    clearTimeout(previewTimeout);
+    currentPreviewUrl = link.href;
 
+    // Instant cached preview if exists
+    if (previewCache[link.href]) {
+        const popup = createPreviewPopup();
+        popup.innerHTML = previewCache[link.href];
+        popup.classList.add('visible');
+        positionPopup(popup, event);
+    }
 
     previewTimeout = setTimeout(async () => {
         if (link.matches(':hover') && currentPreviewUrl === link.href) {
             const popup = createPreviewPopup();
-            popup.innerHTML = '<div class="loading">Loading preview...</div>';
+            if (!previewCache[link.href]) {
+                popup.innerHTML = '<div class="loading">Loading preview...</div>';
+            }
             popup.classList.add('visible');
             positionPopup(popup, event);
-
             try {
                 const [response, storageData] = await Promise.all([
                     fetch(link.href),
@@ -141,7 +148,6 @@ function showPreview(event) {
                 ]);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const text = await response.text();
-
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(text, 'text/html');
                 const ogImage = doc.querySelector('meta[property="og:image"]')?.getAttribute('content');
@@ -156,24 +162,28 @@ function showPreview(event) {
                 let statusLabel = '';
                 let buttonSection = '';
                 if(saved){
-                    statusLabel = `<div style="margin:8px 0;font-weight:bold;">Saved as: ${saved.status}</div>`;
+                    statusLabel = `<div style=\"margin:8px 0;font-weight:bold;\">Saved as: ${saved.status}</div>`;
                 }else{
-                    buttonSection = `<button id="motamem-preview-add-btn" style="margin-top:8px;padding:4px 8px;">Add to Want to Read</button>`;
+                    buttonSection = `<button id=\"motamem-preview-add-btn\" style=\"margin-top:8px;padding:4px 8px;\">Add to Want to Read</button>`;
                 }
 
                 let imageSection = '';
                 if (ogImage) {
-                    imageSection = `<img src="${ogImage}" alt="Preview Image" style="width:100%;height:auto;margin-bottom:8px;">`;
+                    imageSection = `<img src=\"${ogImage}\" alt=\"Preview Image\" style=\"width:100%;height:auto;margin-bottom:8px;\">`;
                 }
 
-                popup.innerHTML = `
+                const htmlContent = `
                     ${imageSection}
                     <h4>${previewTitle}</h4>
                     <p>${previewDesc}</p>
                     ${statusLabel}
                     ${buttonSection}
                 `;
-                positionPopup(popup, event);
+                previewCache[link.href] = htmlContent; // update cache
+                if(currentPreviewUrl === link.href){
+                  popup.innerHTML = htmlContent;
+                  positionPopup(popup, event);
+                }
 
                 if(!saved){
                     const btn = popup.querySelector('#motamem-preview-add-btn');
@@ -195,15 +205,15 @@ function showPreview(event) {
 
             } catch (error) {
                 console.error('Error fetching preview:', error);
-                if (currentPreviewUrl === link.href) {
-                    popup.innerHTML = `<div class="error">Could not load preview.</div>`;
+                if(currentPreviewUrl === link.href){
+                    popup.innerHTML = `<div class=\"error\">Could not load preview.</div>`;
                     positionPopup(popup, event);
                 } else {
                     hidePreview();
                 }
             }
         }
-    }, 500);
+    }, 150);
 }
 
 function hidePreview() {
