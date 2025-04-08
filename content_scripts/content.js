@@ -128,44 +128,37 @@ function showPreview(event) {
 
 
     previewTimeout = setTimeout(async () => {
-        // Check if the mouse is still over the *same* link after the delay
         if (link.matches(':hover') && currentPreviewUrl === link.href) {
             const popup = createPreviewPopup();
-            popup.innerHTML = '<div class="loading">Loading preview...</div>'; // Show loading indicator
+            popup.innerHTML = '<div class="loading">Loading preview...</div>';
             popup.classList.add('visible');
-            positionPopup(popup, event); // Position near the mouse/link
+            positionPopup(popup, event);
 
             try {
-                // Fetch the target page content
-                 // Use 'no-cors' mode ONLY IF NECESSARY, ideally rely on host permissions.
-                 // Note: 'no-cors' prevents reading the response body directly in JS!
-                 // For same-origin or allowed cross-origin (via manifest), standard fetch is fine.
-                const response = await fetch(link.href);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                const [response, storageData] = await Promise.all([
+                    fetch(link.href),
+                    chrome.storage.local.get(storageKey)
+                ]);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const text = await response.text();
 
-                // Basic parsing to get title and description/first paragraph
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(text, 'text/html');
-                
                 const ogImage = doc.querySelector('meta[property="og:image"]')?.getAttribute('content');
                 const ogTitle = doc.querySelector('meta[property="og:title"]')?.getAttribute('content');
                 const ogDescription = doc.querySelector('meta[property="og:description"]')?.getAttribute('content');
-                
                 const previewTitle = ogTitle || doc.querySelector('title')?.textContent || 'No Title Found';
-                let previewDesc = ogDescription
-                    || doc.querySelector('meta[name="description"]')?.getAttribute('content')
-                    || doc.querySelector('p')?.textContent
-                    || 'No description available.';
-                
+                let previewDesc = ogDescription || doc.querySelector('meta[name="description"]')?.getAttribute('content') || doc.querySelector('p')?.textContent || 'No description available.';
                 previewDesc = previewDesc.trim().substring(0, 250) + (previewDesc.length > 250 ? '...' : '');
-                
-                // Check again if we are still supposed to show this preview
-                if (currentPreviewUrl !== link.href) {
-                    hidePreview();
-                    return;
+
+                const articles = storageData[storageKey] || {};
+                const saved = articles[link.href];
+                let statusLabel = '';
+                let buttonSection = '';
+                if(saved){
+                    statusLabel = `<div style="margin:8px 0;font-weight:bold;">Saved as: ${saved.status}</div>`;
+                }else{
+                    buttonSection = `<button id="motamem-preview-add-btn" style="margin-top:8px;padding:4px 8px;">Add to Want to Read</button>`;
                 }
 
                 let imageSection = '';
@@ -177,20 +170,40 @@ function showPreview(event) {
                     ${imageSection}
                     <h4>${previewTitle}</h4>
                     <p>${previewDesc}</p>
+                    ${statusLabel}
+                    ${buttonSection}
                 `;
-                positionPopup(popup, event); // Re-position after content loaded
+                positionPopup(popup, event);
+
+                if(!saved){
+                    const btn = popup.querySelector('#motamem-preview-add-btn');
+                    btn.onclick = async ()=>{
+                        try{
+                            const newData = await chrome.storage.local.get(storageKey);
+                            const updatedArticles = newData[storageKey] || {};
+                            updatedArticles[link.href]={
+                                title: previewTitle,
+                                url: link.href,
+                                status: 'Want to Read',
+                                timestamp: Date.now()
+                            };
+                            await chrome.storage.local.set({[storageKey]: updatedArticles});
+                            btn.outerHTML = `<div style='margin:8px 0;font-weight:bold;'>Saved as: Want to Read</div>`;
+                        }catch(err){console.error('Failed to save from preview button',err)}
+                    }
+                }
 
             } catch (error) {
                 console.error('Error fetching preview:', error);
-                 if (currentPreviewUrl === link.href) { // Only show error if still relevant
+                if (currentPreviewUrl === link.href) {
                     popup.innerHTML = `<div class="error">Could not load preview.</div>`;
                     positionPopup(popup, event);
                 } else {
-                    hidePreview(); // Hide if irrelevant now
+                    hidePreview();
                 }
             }
         }
-    }, 500); // 500ms delay before fetching
+    }, 500);
 }
 
 function hidePreview() {
