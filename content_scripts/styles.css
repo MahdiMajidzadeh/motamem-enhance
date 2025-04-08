@@ -1,0 +1,105 @@
+/* --- Action Buttons --- */
+.motamem-tracker-container {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    z-index: 9999; /* High z-index to stay on top */
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    gap: 8px; /* Space between buttons */
+}
+
+.motamem-tracker-button {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s ease;
+    text-align: center;
+    min-width: 100px; /* Ensure buttons have a decent width */
+}
+
+.motamem-tracker-button:hover {
+    background-color: #f0f0f0;
+}
+
+.motamem-tracker-button.read {
+    background-color: #d4edda; /* Light green */
+    border-color: #c3e6cb;
+}
+.motamem-tracker-button.read:hover {
+    background-color: #c3e6cb;
+}
+
+
+.motamem-tracker-button.want-to-read {
+    background-color: #fff3cd; /* Light yellow */
+    border-color: #ffeeba;
+}
+.motamem-tracker-button.want-to-read:hover {
+    background-color: #ffeeba;
+}
+
+.motamem-tracker-button.active {
+    font-weight: bold;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.motamem-tracker-button.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #e9ecef;
+}
+
+
+/* --- Link Preview Popup --- */
+#motamem-link-preview {
+    position: absolute; /* Positioned relative to the hovered link */
+    z-index: 10000; /* Even higher z-index */
+    background-color: white;
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 5px;
+    max-width: 400px; /* Limit width */
+    font-size: 14px;
+    line-height: 1.4;
+    pointer-events: none; /* Prevent popup from interfering with mouse */
+    opacity: 0; /* Start hidden */
+    transition: opacity 0.2s ease-in-out;
+    white-space: normal; /* Allow text wrapping */
+}
+
+#motamem-link-preview.visible {
+    opacity: 1;
+}
+
+#motamem-link-preview h4 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 16px;
+    color: #0056b3; /* Match link color potentially */
+}
+
+#motamem-link-preview p {
+    margin: 0;
+    color: #333;
+    max-height: 100px; /* Limit description height */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#motamem-link-preview .loading {
+    font-style: italic;
+    color: #666;
+}
+
+#motamem-link-preview .error {
+    color: #dc3545; /* Red for errors */
+    font-style: italic;
+}

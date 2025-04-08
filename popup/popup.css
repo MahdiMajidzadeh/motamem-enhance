@@ -1,0 +1,128 @@
+body {
+    font-family: sans-serif;
+    width: 450px; /* Adjust width as needed */
+    max-height: 500px; /* Prevent popup from becoming too tall */
+    overflow-y: auto; /* Allow scrolling if content exceeds max height */
+    margin: 0;
+    padding: 0; /* Remove default body padding */
+}
+
+.container {
+    padding: 15px;
+}
+
+h1 {
+    font-size: 18px;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    text-align: center;
+}
+
+.controls {
+    margin-bottom: 15px;
+    text-align: right;
+}
+
+#export-csv {
+    padding: 8px 12px;
+    border: 1px solid #007bff;
+    background-color: #007bff;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s ease;
+}
+
+#export-csv:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+#article-list {
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+}
+
+.article-item {
+    padding: 10px 5px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px; /* Space between elements */
+}
+
+.article-item:last-child {
+    border-bottom: none;
+}
+
+.article-info {
+    flex-grow: 1; /* Allow info to take available space */
+    overflow: hidden; /* Prevent long titles/urls from breaking layout */
+}
+
+.article-title {
+    display: block; /* Ensure title takes its own line */
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Add '...' for long titles */
+    margin-bottom: 3px;
+    font-size: 14px;
+}
+.article-title a {
+    text-decoration: none;
+    color: #0056b3;
+}
+.article-title a:hover {
+    text-decoration: underline;
+}
+
+
+.article-meta {
+    font-size: 11px;
+    color: #666;
+    display: flex;
+    flex-wrap: wrap; /* Allow meta items to wrap */
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.article-status {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.status-read {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-want-to-read {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.article-actions button {
+    background: none;
+    border: none;
+    color: #dc3545; /* Red for delete */
+    cursor: pointer;
+    font-size: 14px;
+    padding: 5px;
+}
+.article-actions button:hover {
+    color: #a71d2a;
+}
+
+.empty-list, .loading {
+    text-align: center;
+    color: #888;
+    font-style: italic;
+    padding: 20px;
+}
