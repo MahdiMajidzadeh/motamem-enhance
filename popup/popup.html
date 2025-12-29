@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Motammem Enhancer</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header class="popup-header">
+      <h1>Motammem Enhancer</h1>
+    </header>
+    
+    <div class="popup-content">
+      <div id="current-page-status" class="status-section">
+        <p class="status-text">Checking current page...</p>
+      </div>
+      
+      <div class="actions-section">
+        <button id="add-to-read" class="action-btn btn-toread">
+          <span>📖</span> Add to To Read
+        </button>
+        <button id="add-to-read-list" class="action-btn btn-read">
+          <span>✓</span> Add to Read
+        </button>
+      </div>
+      
+      <div class="stats-section">
+        <div class="stat-item">
+          <span class="stat-label">To Read:</span>
+          <span id="toread-count" class="stat-value">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Read:</span>
+          <span id="read-count" class="stat-value">0</span>
+        </div>
+      </div>
+      
+      <div class="links-section">
+        <a id="view-saved" href="#" class="link-btn">View Saved Posts</a>
+      </div>
+      
+      <div class="export-section">
+        <button id="export-btn" class="export-btn">Export</button>
+        <button id="import-btn" class="import-btn">Import</button>
+        <input type="file" id="import-file" accept=".json" style="display: none;">
+      </div>
+    </div>
+    
+    <div id="notification" class="notification"></div>
+  </div>
+  
+  <script src="../shared/utils.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
+

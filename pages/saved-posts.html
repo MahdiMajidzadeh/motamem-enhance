@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saved Posts - Motammem Enhancer</title>
+  <link rel="stylesheet" href="saved-posts.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>Saved Posts</h1>
+      <div class="header-actions">
+        <button id="export-btn" class="btn btn-secondary">Export</button>
+        <button id="import-btn" class="btn btn-secondary">Import</button>
+        <input type="file" id="import-file" accept=".json" style="display: none;">
+      </div>
+    </header>
+    
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="toRead">
+        <span>📖</span> To Read
+        <span class="count" id="toread-tab-count">0</span>
+      </button>
+      <button class="tab-btn" data-tab="read">
+        <span>✓</span> Read
+        <span class="count" id="read-tab-count">0</span>
+      </button>
+    </div>
+    
+    <div class="content">
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading posts...</p>
+      </div>
+      
+      <div id="empty-state" class="empty-state" style="display: none;">
+        <div class="empty-icon">📭</div>
+        <h2>No posts saved yet</h2>
+        <p>Start saving posts from the blog to see them here</p>
+      </div>
+      
+      <div id="posts-list" class="posts-list" style="display: none;"></div>
+      
+      <div id="pagination" class="pagination" style="display: none;"></div>
+    </div>
+  </div>
+  
+  <div id="notification" class="notification"></div>
+  
+  <script src="../shared/utils.js"></script>
+  <script src="saved-posts.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "Motammem Blog Enhancer",
+  "version": "1.0.0",
+  "description": "Save and manage blog posts to read and read lists",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://motamem.org/*",
+    "*://*.motamem.org/*"
+  ],
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://motamem.org/*",
+        "*://*.motamem.org/*"
+      ],
+      "js": ["content/content-script.js"],
+      "css": ["content/content-script.css"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "assets/icons/icon16.png",
+      "48": "assets/icons/icon48.png",
+      "128": "assets/icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  }
+}
+
