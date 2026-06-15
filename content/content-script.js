@@ -93,26 +93,30 @@
     }
   }
   
-  // Extract post title from page
+  // Extract post title from page.
+  // Ordered most-specific to least. The old [class*="title"] matcher was
+  // dropped because it also matched sidebar/widget/nav elements (e.g.
+  // "widget-title") and could win over the real post heading.
   function extractPostTitle() {
-    // Try various selectors for post title
-    const selectors = [
-      'h1',
-      'article h1',
-      '.post-title',
-      '.entry-title',
-      '[class*="title"]',
-      'title'
-    ];
-    
+    // Canonical title from social metadata, when present.
+    const ogTitle = document.querySelector('meta[property="og:title"], meta[name="og:title"]');
+    if (ogTitle && ogTitle.content && ogTitle.content.trim()) {
+      return ogTitle.content.trim();
+    }
+
+    // In-content title elements. motamem.org uses <h1 class="title">; many
+    // WordPress themes use .entry-title. Generic h1 is the last DOM fallback.
+    const selectors = ['h1.title', '.entry-title', '.post-title', 'article h1', 'main h1', 'h1'];
     for (const selector of selectors) {
       const element = document.querySelector(selector);
-      if (element && element.textContent.trim()) {
-        return element.textContent.trim();
-      }
+      const text = element && element.textContent.trim();
+      if (text) return text;
     }
-    
-    return document.title || currentUrl;
+
+    // Fall back to the document title, stripped of a trailing site name
+    // (e.g. "Post Title | متمم").
+    const docTitle = (document.title || '').split(/\s+[|–—-]\s+/)[0].trim();
+    return docTitle || document.title || currentUrl;
   }
   
   // Show notification
