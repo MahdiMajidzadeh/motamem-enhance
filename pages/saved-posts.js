@@ -118,41 +118,80 @@ function renderPosts(posts) {
   document.getElementById('posts-list').style.display = 'grid';
 }
 
-// Create post item element
+// Only allow http(s) links so a malicious href (e.g. javascript:) can't execute.
+function safeHref(url) {
+  try {
+    const parsed = new URL(url);
+    return (parsed.protocol === 'http:' || parsed.protocol === 'https:') ? parsed.href : '#';
+  } catch {
+    return '#';
+  }
+}
+
+// Create post item element.
+// Built with DOM APIs / textContent rather than innerHTML: post.title and
+// post.url are untrusted (they can come from imported JSON) and must never be
+// interpreted as HTML.
 function createPostItem(post) {
   const item = document.createElement('div');
   item.className = 'post-item';
-  
+
   const title = truncateText(post.title, 80);
   const formattedDate = formatDate(post.addedAt);
   const domain = getDomain(post.url);
-  
-  item.innerHTML = `
-    <div class="post-header">
-      <div class="post-title">
-        <a href="${post.url}" target="_blank" rel="noopener">${title}</a>
-      </div>
-      <div class="post-actions">
-        ${currentTab === 'toRead' 
-          ? `<button class="btn btn-primary btn-small move-btn" data-url="${post.url}">Mark as Read</button>`
-          : `<button class="btn btn-primary btn-small move-btn" data-url="${post.url}">Move to To Read</button>`
-        }
-        <button class="btn btn-danger btn-small remove-btn" data-url="${post.url}">Remove</button>
-      </div>
-    </div>
-    <div class="post-meta">
-      <a href="${post.url}" target="_blank" rel="noopener" class="post-url">${domain}</a>
-      <span class="post-date">📅 ${formattedDate}</span>
-    </div>
-  `;
-  
-  // Add event listeners
-  const removeBtn = item.querySelector('.remove-btn');
-  removeBtn.addEventListener('click', () => handleRemove(post.url));
-  
-  const moveBtn = item.querySelector('.move-btn');
+  const href = safeHref(post.url);
+
+  const header = document.createElement('div');
+  header.className = 'post-header';
+
+  const titleWrap = document.createElement('div');
+  titleWrap.className = 'post-title';
+  const titleLink = document.createElement('a');
+  titleLink.href = href;
+  titleLink.target = '_blank';
+  titleLink.rel = 'noopener';
+  titleLink.textContent = title;
+  titleWrap.appendChild(titleLink);
+
+  const actions = document.createElement('div');
+  actions.className = 'post-actions';
+
+  const moveBtn = document.createElement('button');
+  moveBtn.className = 'btn btn-primary btn-small move-btn';
+  moveBtn.textContent = currentTab === 'toRead' ? 'Mark as Read' : 'Move to To Read';
   moveBtn.addEventListener('click', () => handleMove(post.url));
-  
+
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'btn btn-danger btn-small remove-btn';
+  removeBtn.textContent = 'Remove';
+  removeBtn.addEventListener('click', () => handleRemove(post.url));
+
+  actions.appendChild(moveBtn);
+  actions.appendChild(removeBtn);
+
+  header.appendChild(titleWrap);
+  header.appendChild(actions);
+
+  const meta = document.createElement('div');
+  meta.className = 'post-meta';
+
+  const urlLink = document.createElement('a');
+  urlLink.href = href;
+  urlLink.target = '_blank';
+  urlLink.rel = 'noopener';
+  urlLink.className = 'post-url';
+  urlLink.textContent = domain;
+
+  const dateSpan = document.createElement('span');
+  dateSpan.className = 'post-date';
+  dateSpan.textContent = `📅 ${formattedDate}`;
+
+  meta.appendChild(urlLink);
+  meta.appendChild(dateSpan);
+
+  item.appendChild(header);
+  item.appendChild(meta);
+
   return item;
 }
 
