@@ -54,11 +54,14 @@ async function init() {
     // Check if on Motammem domain
     try {
       const url = new URL(currentUrl);
-      if (url.hostname.includes('motamem.org')) {
-        checkCurrentPageStatus();
-      } else {
+      if (!url.hostname.includes('motamem.org')) {
         showStatus('Not on Motammem blog', false);
         disableActions();
+      } else if (typeof isExcludedMotamemUrl === 'function' && isExcludedMotamemUrl(url)) {
+        showStatus("This page can't be saved", false);
+        disableActions();
+      } else {
+        checkCurrentPageStatus();
       }
     } catch {
       showStatus('Invalid URL', false);

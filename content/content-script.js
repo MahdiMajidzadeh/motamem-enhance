@@ -15,6 +15,11 @@
   
   // Create floating action buttons
   function createFloatingButtons() {
+    // Don't offer to save pages that are on the exclusion list.
+    if (typeof isExcludedMotamemUrl === 'function' && isExcludedMotamemUrl(window.location.href)) {
+      return;
+    }
+
     // Remove existing buttons if any
     const existing = document.getElementById('motammem-enhancer-buttons');
     if (existing) existing.remove();
@@ -164,6 +169,12 @@
     // Only http(s) links on the same host as the current page.
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
     if (url.hostname !== window.location.hostname) return false;
+
+    // Links inside the site's nav menu are never saveable.
+    if (linkEl.closest && linkEl.closest('.ubermenu')) return false;
+
+    // Explicitly excluded pages (profiles, shop, search, comment pages, …).
+    if (typeof isExcludedMotamemUrl === 'function' && isExcludedMotamemUrl(url)) return false;
 
     const path = url.pathname;
 
