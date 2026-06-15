@@ -6,142 +6,149 @@ const STORAGE_KEYS = {
 };
 
 /**
- * Initialize storage if it doesn't exist
+ * Serialize mutating operations so concurrent requests can't interleave their
+ * read-modify-write sequences and clobber each other's writes.
+ *
+ * chrome.storage.local has no atomic update primitive: every mutation is
+ * `get` -> mutate in JS -> `set`. The service worker handles each incoming
+ * message as a separate async task, so two near-simultaneous writes (e.g. a
+ * hover tooltip and the floating button) would both read the old array and the
+ * second `set` would overwrite the first. Chaining every mutation on a single
+ * promise guarantees each one completes before the next begins.
  */
-async function initStorage() {
-  const data = await chrome.storage.local.get([STORAGE_KEYS.TO_READ, STORAGE_KEYS.READ]);
-  if (!data[STORAGE_KEYS.TO_READ]) {
-    await chrome.storage.local.set({ [STORAGE_KEYS.TO_READ]: [] });
-  }
-  if (!data[STORAGE_KEYS.READ]) {
-    await chrome.storage.local.set({ [STORAGE_KEYS.READ]: [] });
-  }
+let _writeLock = Promise.resolve();
+function withLock(fn) {
+  const result = _writeLock.then(() => fn());
+  // Keep the chain alive even if this operation rejects; swallow only on the
+  // internal chain, the real result/rejection is still returned to the caller.
+  _writeLock = result.then(() => {}, () => {});
+  return result;
 }
 
 /**
- * Check if a URL already exists in a list
+ * Read both lists in a single round-trip, defaulting missing keys to [].
  */
-async function urlExists(url, listType) {
-  const key = listType === 'toRead' ? STORAGE_KEYS.TO_READ : STORAGE_KEYS.READ;
-  const data = await chrome.storage.local.get([key]);
-  const list = data[key] || [];
-  return list.some(item => item.url === url);
+async function _getLists() {
+  const data = await chrome.storage.local.get([STORAGE_KEYS.TO_READ, STORAGE_KEYS.READ]);
+  return {
+    toRead: data[STORAGE_KEYS.TO_READ] || [],
+    read: data[STORAGE_KEYS.READ] || []
+  };
+}
+
+/**
+ * Initialize storage if it doesn't exist
+ */
+async function initStorage() {
+  return withLock(async () => {
+    const { toRead, read } = await _getLists();
+    await chrome.storage.local.set({
+      [STORAGE_KEYS.TO_READ]: toRead,
+      [STORAGE_KEYS.READ]: read
+    });
+  });
 }
 
 /**
  * Add post to "to read" list
  */
 async function addToRead(url, title) {
-  await initStorage();
-  
-  // Check if already exists
-  if (await urlExists(url, 'toRead')) {
-    throw new Error('Post already in "to read" list');
-  }
-  
-  // Remove from "read" list if it exists there
-  await removeFromList(url, 'read');
-  
-  const data = await chrome.storage.local.get([STORAGE_KEYS.TO_READ]);
-  const toRead = data[STORAGE_KEYS.TO_READ] || [];
-  
-  toRead.unshift({
-    url,
-    title: title || url,
-    addedAt: Date.now()
+  return withLock(async () => {
+    const { toRead, read } = await _getLists();
+
+    if (toRead.some(item => item.url === url)) {
+      throw new Error('Post already in "to read" list');
+    }
+
+    // Remove from "read" list if it exists there, then prepend to "to read".
+    const newRead = read.filter(item => item.url !== url);
+    const newToRead = [{ url, title: title || url, addedAt: Date.now() }, ...toRead];
+
+    await chrome.storage.local.set({
+      [STORAGE_KEYS.TO_READ]: newToRead,
+      [STORAGE_KEYS.READ]: newRead
+    });
+    return true;
   });
-  
-  await chrome.storage.local.set({ [STORAGE_KEYS.TO_READ]: toRead });
-  return true;
 }
 
 /**
  * Add post to "read" list
  */
 async function addToReadList(url, title) {
-  await initStorage();
-  
-  // Check if already exists
-  if (await urlExists(url, 'read')) {
-    throw new Error('Post already in "read" list');
-  }
-  
-  // Remove from "to read" list if it exists there
-  await removeFromList(url, 'toRead');
-  
-  const data = await chrome.storage.local.get([STORAGE_KEYS.READ]);
-  const read = data[STORAGE_KEYS.READ] || [];
-  
-  read.unshift({
-    url,
-    title: title || url,
-    addedAt: Date.now()
+  return withLock(async () => {
+    const { toRead, read } = await _getLists();
+
+    if (read.some(item => item.url === url)) {
+      throw new Error('Post already in "read" list');
+    }
+
+    // Remove from "to read" list if it exists there, then prepend to "read".
+    const newToRead = toRead.filter(item => item.url !== url);
+    const newRead = [{ url, title: title || url, addedAt: Date.now() }, ...read];
+
+    await chrome.storage.local.set({
+      [STORAGE_KEYS.TO_READ]: newToRead,
+      [STORAGE_KEYS.READ]: newRead
+    });
+    return true;
   });
-  
-  await chrome.storage.local.set({ [STORAGE_KEYS.READ]: read });
-  return true;
 }
 
 /**
  * Remove post from a list
  */
 async function removeFromList(url, listType) {
-  await initStorage();
-  const key = listType === 'toRead' ? STORAGE_KEYS.TO_READ : STORAGE_KEYS.READ;
-  const data = await chrome.storage.local.get([key]);
-  const list = data[key] || [];
-  
-  const filtered = list.filter(item => item.url !== url);
-  await chrome.storage.local.set({ [key]: filtered });
-  return true;
+  return withLock(async () => {
+    const key = listType === 'toRead' ? STORAGE_KEYS.TO_READ : STORAGE_KEYS.READ;
+    const data = await chrome.storage.local.get([key]);
+    const list = data[key] || [];
+
+    await chrome.storage.local.set({ [key]: list.filter(item => item.url !== url) });
+    return true;
+  });
 }
 
 /**
  * Move post from one list to another
  */
 async function movePost(url, fromList, toList) {
-  await initStorage();
-  
-  const fromKey = fromList === 'toRead' ? STORAGE_KEYS.TO_READ : STORAGE_KEYS.READ;
-  const toKey = toList === 'toRead' ? STORAGE_KEYS.TO_READ : STORAGE_KEYS.READ;
-  
-  const data = await chrome.storage.local.get([fromKey, toKey]);
-  const fromListData = data[fromKey] || [];
-  const toListData = data[toKey] || [];
-  
-  const post = fromListData.find(item => item.url === url);
-  if (!post) {
-    throw new Error('Post not found in source list');
-  }
-  
-  // Remove from source list
-  const filteredFrom = fromListData.filter(item => item.url !== url);
-  
-  // Add to target list (update timestamp)
-  const updatedPost = { ...post, addedAt: Date.now() };
-  toListData.unshift(updatedPost);
-  
-  await chrome.storage.local.set({
-    [fromKey]: filteredFrom,
-    [toKey]: toListData
+  return withLock(async () => {
+    const fromKey = fromList === 'toRead' ? STORAGE_KEYS.TO_READ : STORAGE_KEYS.READ;
+    const toKey = toList === 'toRead' ? STORAGE_KEYS.TO_READ : STORAGE_KEYS.READ;
+
+    const data = await chrome.storage.local.get([fromKey, toKey]);
+    const fromListData = data[fromKey] || [];
+    const toListData = data[toKey] || [];
+
+    const post = fromListData.find(item => item.url === url);
+    if (!post) {
+      throw new Error('Post not found in source list');
+    }
+
+    const filteredFrom = fromListData.filter(item => item.url !== url);
+    const updatedPost = { ...post, addedAt: Date.now() };
+
+    await chrome.storage.local.set({
+      [fromKey]: filteredFrom,
+      [toKey]: [updatedPost, ...toListData]
+    });
+    return true;
   });
-  
-  return true;
 }
 
 /**
  * Get all posts from a list with pagination
  */
 async function getAllPosts(listType, page = 1, pageSize = 20) {
-  await initStorage();
   const key = listType === 'toRead' ? STORAGE_KEYS.TO_READ : STORAGE_KEYS.READ;
   const data = await chrome.storage.local.get([key]);
   const list = data[key] || [];
-  
+
   const start = (page - 1) * pageSize;
   const end = start + pageSize;
   const paginated = list.slice(start, end);
-  
+
   return {
     posts: paginated,
     total: list.length,
@@ -155,12 +162,9 @@ async function getAllPosts(listType, page = 1, pageSize = 20) {
  * Get post status (which list it's in, if any)
  */
 async function getPostStatus(url) {
-  await initStorage();
-  const toReadExists = await urlExists(url, 'toRead');
-  const readExists = await urlExists(url, 'read');
-  
-  if (toReadExists) return 'toRead';
-  if (readExists) return 'read';
+  const { toRead, read } = await _getLists();
+  if (toRead.some(item => item.url === url)) return 'toRead';
+  if (read.some(item => item.url === url)) return 'read';
   return null;
 }
 
@@ -168,12 +172,10 @@ async function getPostStatus(url) {
  * Export all data to JSON
  */
 async function exportData() {
-  await initStorage();
-  const data = await chrome.storage.local.get([STORAGE_KEYS.TO_READ, STORAGE_KEYS.READ]);
-  
+  const { toRead, read } = await _getLists();
   return JSON.stringify({
-    toRead: data[STORAGE_KEYS.TO_READ] || [],
-    read: data[STORAGE_KEYS.READ] || [],
+    toRead,
+    read,
     exportedAt: Date.now()
   }, null, 2);
 }
@@ -182,50 +184,48 @@ async function exportData() {
  * Import data from JSON
  */
 async function importData(jsonData) {
+  let imported;
   try {
-    const imported = JSON.parse(jsonData);
-    
-    if (!imported.toRead || !imported.read) {
-      throw new Error('Invalid data format');
-    }
-    
-    // Merge with existing data, avoiding duplicates
-    const existing = await chrome.storage.local.get([STORAGE_KEYS.TO_READ, STORAGE_KEYS.READ]);
-    const existingToRead = existing[STORAGE_KEYS.TO_READ] || [];
-    const existingRead = existing[STORAGE_KEYS.READ] || [];
-    
+    imported = JSON.parse(jsonData);
+  } catch (error) {
+    throw new Error('Failed to import data: ' + error.message);
+  }
+
+  if (!imported || !Array.isArray(imported.toRead) || !Array.isArray(imported.read)) {
+    throw new Error('Invalid data format');
+  }
+
+  return withLock(async () => {
+    // Merge with existing data, avoiding duplicates.
+    const { toRead: existingToRead, read: existingRead } = await _getLists();
+
     const existingUrls = new Set([
       ...existingToRead.map(p => p.url),
       ...existingRead.map(p => p.url)
     ]);
-    
-    const newToRead = imported.toRead.filter(p => !existingUrls.has(p.url));
-    const newRead = imported.read.filter(p => !existingUrls.has(p.url));
-    
+
+    const newToRead = imported.toRead.filter(p => p && !existingUrls.has(p.url));
+    const newRead = imported.read.filter(p => p && !existingUrls.has(p.url));
+
     await chrome.storage.local.set({
       [STORAGE_KEYS.TO_READ]: [...newToRead, ...existingToRead],
       [STORAGE_KEYS.READ]: [...newRead, ...existingRead]
     });
-    
+
     return {
       imported: newToRead.length + newRead.length,
       skipped: imported.toRead.length + imported.read.length - newToRead.length - newRead.length
     };
-  } catch (error) {
-    throw new Error('Failed to import data: ' + error.message);
-  }
+  });
 }
 
 /**
  * Get counts for both lists
  */
 async function getCounts() {
-  await initStorage();
-  const data = await chrome.storage.local.get([STORAGE_KEYS.TO_READ, STORAGE_KEYS.READ]);
-  
+  const { toRead, read } = await _getLists();
   return {
-    toRead: (data[STORAGE_KEYS.TO_READ] || []).length,
-    read: (data[STORAGE_KEYS.READ] || []).length
+    toRead: toRead.length,
+    read: read.length
   };
 }
-
