@@ -6,6 +6,14 @@ const pageSize = 20;
 
 // Initialize page
 async function init() {
+  // Keep this tab's theme in sync if it's changed from the popup while open.
+  // (theme.js already applied the stored theme before paint.)
+  window.addEventListener('storage', (e) => {
+    if (e.key === (window.MMTheme && window.MMTheme.KEY) && window.MMTheme) {
+      window.MMTheme.apply(window.MMTheme.get());
+    }
+  });
+
   setupEventListeners();
   loadTabCounts();
   await loadPosts();

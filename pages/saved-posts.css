@@ -32,8 +32,10 @@
   --shadow-hover: 0 10px 24px rgba(16, 24, 40, 0.13);
 }
 
+/* Dark tokens: applied when the OS prefers dark (unless the user forced
+   light), or when the user explicitly chose dark via the popup toggle. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --text-primary: #e9efe9;
     --text-secondary: #9aa39a;
     --bg-primary: #16191a;     /* charcoal, like the motamem.org header bar */
@@ -44,6 +46,18 @@
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-hover: 0 12px 30px rgba(0, 0, 0, 0.55);
   }
+}
+
+:root[data-theme="dark"] {
+  --text-primary: #e9efe9;
+  --text-secondary: #9aa39a;
+  --bg-primary: #16191a;
+  --bg-secondary: #202422;
+  --bg-subtle: #272c29;
+  --border-color: #323a34;
+  --ring: rgba(46, 180, 46, 0.5);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 12px 30px rgba(0, 0, 0, 0.55);
 }
 
 body {

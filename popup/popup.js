@@ -3,8 +3,48 @@
 let currentTab = null;
 let currentUrl = null;
 
+// ── Theme switcher ─────────────────────────────────
+// Cycles System → Light → Dark. MMTheme (shared/theme.js) persists the
+// choice and applies it to <html>; the same key is read by the saved-posts
+// page so both extension surfaces stay in sync.
+const THEME_ORDER = ['system', 'light', 'dark'];
+const THEME_ICONS = {
+  // monitor (system)
+  system: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',
+  // sun (light)
+  light: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  // moon (dark)
+  dark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>'
+};
+const THEME_LABELS = { system: 'System', light: 'Light', dark: 'Dark' };
+
+function updateThemeToggle(theme) {
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  btn.innerHTML = THEME_ICONS[theme] || THEME_ICONS.system;
+  const label = `Theme: ${THEME_LABELS[theme] || 'System'}`;
+  btn.title = `${label} — click to change`;
+  btn.setAttribute('aria-label', label);
+}
+
+function setupThemeToggle() {
+  const current = window.MMTheme ? window.MMTheme.get() : 'system';
+  updateThemeToggle(current);
+
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const cur = window.MMTheme ? window.MMTheme.get() : 'system';
+    const next = THEME_ORDER[(THEME_ORDER.indexOf(cur) + 1) % THEME_ORDER.length];
+    if (window.MMTheme) window.MMTheme.set(next);
+    updateThemeToggle(next);
+  });
+}
+
 // Initialize popup
 async function init() {
+  setupThemeToggle();
+
   // Get current tab
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tabs[0]) {

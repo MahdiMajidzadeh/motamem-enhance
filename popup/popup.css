@@ -29,8 +29,10 @@
   --radius: 14px;
 }
 
+/* Dark tokens: applied when the OS prefers dark (unless the user forced
+   light), or when the user explicitly chose dark via the popup toggle. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #16191a;       /* charcoal, like the motamem.org header bar */
     --surface: #202422;
     --surface-2: #272c29;
@@ -41,6 +43,18 @@
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.55);
   }
+}
+
+:root[data-theme="dark"] {
+  --bg: #16191a;
+  --surface: #202422;
+  --surface-2: #272c29;
+  --text: #e9efe9;
+  --muted: #9aa39a;
+  --border: #323a34;
+  --ring: rgba(46, 180, 46, 0.5);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.55);
 }
 
 body {
@@ -81,6 +95,24 @@ body {
 .brand-text { display: flex; flex-direction: column; line-height: 1.15; }
 .brand-text h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
 .brand-sub { font-size: 11.5px; opacity: 0.85; font-weight: 500; }
+
+.theme-toggle {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.16s ease, transform 0.16s ease;
+}
+.theme-toggle:hover { background: rgba(255, 255, 255, 0.28); }
+.theme-toggle:active { transform: scale(0.92); }
+.theme-toggle:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.55); }
+.theme-toggle svg { width: 18px; height: 18px; }
 
 /* ── Body ───────────────────────────────────────── */
 .popup-body {
