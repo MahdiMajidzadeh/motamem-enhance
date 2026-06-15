@@ -1,122 +1,66 @@
-# Motammem Blog Enhancer - Chrome Extension
+# Motamem Blog Enhancer
 
-A Chrome extension for saving and managing blog posts from Motammem blog to "to read" and "read" lists.
+Save and organize posts from the [motamem.org](https://motamem.org) blog into your own **To Read** and **Read** lists — your personal read-it-later, right inside the browser.
 
-## Features
+## What it does
 
-- ✅ Add posts to "To Read" or "Read" lists when visiting a post
-- ✅ View all saved posts in a full-page interface with pagination
-- ✅ Hover over links to quickly add them to lists
-- ✅ Export and import your saved posts (JSON format)
-- ✅ Modern, minimal UI design
-- ✅ Automatic title and URL extraction
-- ✅ Move posts between lists
-- ✅ Remove posts from lists
+- 📌 Save any post to a **To Read** or **Read** list while you browse
+- 🗂️ Browse all your saved posts on a clean full-page view, split into **To Read** and **Read** tabs
+- 🔄 Move posts between lists, or remove them when you're done
+- 💾 Export your lists to a file and import them back later (great for backups or switching computers)
+- 🧠 Smart about duplicates — saving the same post twice won't clutter your list
+- 🌗 **Light, Dark, or System** theme, styled to match the motamem.org look
+- 🌍 Reads beautifully in Persian and English
 
-## Installation
+## Installing
 
-1. Open Chrome and navigate to `chrome://extensions/`
-2. Enable "Developer mode" (toggle in top right)
-3. Click "Load unpacked"
-4. Select the `motamem-enhance` directory
-5. The extension is now installed!
+1. Download or clone this folder to your computer.
+2. Open Chrome and go to `chrome://extensions/`.
+3. Turn on **Developer mode** (switch in the top-right corner).
+4. Click **Load unpacked** and choose the `motamem-enhance` folder.
+5. The Motamem icon appears in your toolbar — you're ready to go!
 
-## Usage
+## Using it
 
-### Adding Posts
+### Saving a post
 
-**Method 1: On Post Pages**
-- When visiting a blog post, you'll see floating action buttons in the bottom-right corner
-- Click "📖 To Read" or "✓ Read" to add the current post
+There are three easy ways to save:
 
-**Method 2: Via Extension Popup**
-- Click the extension icon in Chrome toolbar
-- Use the "Add to To Read" or "Add to Read" buttons
+- **While reading a post** — look for the floating **To Read** and **Read** buttons in the bottom-right corner of the page, and click one.
+- **From the toolbar** — click the Motamem icon and pick **To Read** or **Read**. The popup also shows whether the current page is already saved.
+- **By hovering a link** — hover over any post link for a moment and a small **To Read / Read** menu pops up so you can save it without opening it first.
 
-**Method 3: Hover on Links**
-- Hover over any link on the blog (wait ~500ms)
-- A tooltip will appear with quick-add buttons
-- Click to add the linked post to your list
+> Some pages (profiles, the shop, search, and menu links) aren't blog posts, so the save options won't appear for them.
 
-### Viewing Saved Posts
+### Viewing your saved posts
 
-- Click the extension icon and select "View Saved Posts"
-- Or open the extension popup and click "View Saved Posts"
-- Switch between "To Read" and "Read" tabs
-- Use pagination to navigate through your saved posts
+- Click the Motamem icon, then **View saved posts** to open the full list.
+- Switch between the **To Read** and **Read** tabs, and page through your posts.
+- Click a post's title to open it in a new tab.
 
-### Managing Posts
+### Keeping your lists tidy
 
-- **Move between lists**: Click "Mark as Read" or "Move to To Read" buttons
-- **Remove posts**: Click the "Remove" button
-- **Open posts**: Click on the post title or URL
+- **Finished a post?** Click **Mark as Read** to move it to your Read list.
+- **Changed your mind?** Use **Move to To Read** to send it back.
+- **Don't need it anymore?** Click **Remove**.
 
-### Export/Import
+### Changing the theme
 
-- **Export**: Click "Export" in popup or saved posts page to download a JSON file
-- **Import**: Click "Import" and select a previously exported JSON file
-- Duplicate URLs are automatically skipped during import
+Click the theme button in the top-right of the popup to switch between **System**, **Light**, and **Dark**. Your choice is remembered and used everywhere in the extension.
 
-## File Structure
+### Backing up your posts
 
-```
-motamem-enhance/
-├── manifest.json              # Extension configuration
-├── background/
-│   └── service-worker.js       # Background service worker
-├── content/
-│   ├── content-script.js       # Content script for blog pages
-│   └── content-script.css      # Styles for injected UI
-├── popup/
-│   ├── popup.html              # Extension popup UI
-│   ├── popup.js                # Popup logic
-│   └── popup.css               # Popup styles
-├── pages/
-│   ├── saved-posts.html        # Full-page saved posts view
-│   ├── saved-posts.js          # Saved posts logic
-│   └── saved-posts.css         # Saved posts styles
-├── shared/
-│   ├── storage.js              # Storage utility functions
-│   └── utils.js                # Shared utilities
-└── assets/
-    └── icons/                  # Extension icons
-```
+- **Export** saves all your lists to a file you can keep safe.
+- **Import** loads a file back in. Posts you already have are skipped, so nothing gets duplicated.
 
-## Technical Details
+Both buttons are available in the popup and on the saved-posts page.
 
-- **Manifest Version**: 3
-- **Storage**: Chrome Storage API (local storage)
-- **Permissions**: `storage`, `activeTab`, `tabs`
-- **Host Permissions**: `*://motamem.org/*`, `*://*.motamem.org/*`
+## Good to know
 
-## Data Format
-
-Saved posts are stored with the following structure:
-```json
-{
-  "toRead": [
-    {
-      "url": "https://motamem.org/post/example",
-      "title": "Post Title",
-      "addedAt": 1234567890123
-    }
-  ],
-  "read": [...]
-}
-```
-
-## Development
-
-The extension uses vanilla JavaScript with no external dependencies. All Chrome Extension APIs are used directly.
-
-## Notes
-
-- The extension only works on Motammem blog domains (`motamem.org`)
-- Posts are stored locally in your browser
-- Export your data regularly to backup your saved posts
-- The extension automatically prevents duplicate entries
+- The extension only works on the motamem.org blog.
+- Your saved posts live in your own browser — nothing is sent anywhere.
+- It's a good idea to **export a backup now and then** so your lists are safe.
 
 ## License
 
 MIT
-
