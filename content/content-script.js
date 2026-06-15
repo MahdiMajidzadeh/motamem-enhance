@@ -132,6 +132,48 @@
     }, 2000);
   }
   
+  // Decide whether a link points at a saveable post, so the hover tooltip
+  // doesn't pop up on navigation, pagination, archives, assets, or the page
+  // we're already on. motamem.org serves content at single-segment slugs
+  // (e.g. /some-slug/); these are the paths that are clearly NOT posts.
+  const NON_POST_PATTERNS = [
+    /^\/page\//i,                                   // pagination: /page/2/
+    /^\/(wp-admin|wp-includes|wp-json|wp-content)/i, // WP internals & uploads
+    /^\/(wp-login|xmlrpc)\.php/i,                    // WP system endpoints
+    /\/feed\/?$/i,                                   // RSS feeds (site or per-post)
+    /^\/(category|tag|author)\//i,                   // archive pages (defensive)
+    /^\/search\//i
+  ];
+  const ASSET_EXT = /\.(jpe?g|png|gif|svg|webp|bmp|ico|pdf|zip|rar|mp3|mp4|wav|css|js|xml|json|txt)$/i;
+
+  function isPostUrl(linkEl) {
+    let url;
+    try {
+      url = new URL(linkEl.href);
+    } catch {
+      return false;
+    }
+
+    // Only http(s) links on the same host as the current page.
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+    if (url.hostname !== window.location.hostname) return false;
+
+    const path = url.pathname;
+
+    // Homepage or pathless link.
+    if (path.length <= 1) return false;
+
+    // In-page anchor to the post we're already reading.
+    if (path === window.location.pathname && url.search === window.location.search) return false;
+
+    // Search results, known non-content paths, or asset files.
+    if (url.searchParams.has('s')) return false;
+    if (NON_POST_PATTERNS.some(re => re.test(path))) return false;
+    if (ASSET_EXT.test(path)) return false;
+
+    return true;
+  }
+
   // Link hover functionality
   let hoverTooltip = null;
   let hoverTimeout = null;
@@ -219,19 +261,12 @@
     document.addEventListener('mouseover', (e) => {
       const link = e.target.closest('a');
       if (!link || !link.href) return;
-      
-      // Only handle links to posts (same domain)
-      try {
-        const linkUrl = new URL(link.href);
-        const currentUrlObj = new URL(window.location.href);
-        
-        if (linkUrl.hostname === currentUrlObj.hostname && linkUrl.pathname !== '/') {
-          hoverTimeout = setTimeout(() => {
-            createHoverTooltip(link);
-          }, 500); // Show after 500ms hover
-        }
-      } catch {
-        // Invalid URL, ignore
+
+      // Only offer the quick-add tooltip on links that look like posts.
+      if (isPostUrl(link)) {
+        hoverTimeout = setTimeout(() => {
+          createHoverTooltip(link);
+        }, 500); // Show after 500ms hover
       }
     });
     
