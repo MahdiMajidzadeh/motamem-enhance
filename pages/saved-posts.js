@@ -305,7 +305,7 @@ async function handleExport() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `motammem-saved-posts-${Date.now()}.json`;
+      a.download = `motamem-saved-posts-${Date.now()}.json`;
       a.click();
       URL.revokeObjectURL(url);
       showNotification('Export successful', 'success');

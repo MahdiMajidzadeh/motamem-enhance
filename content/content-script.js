@@ -4,10 +4,10 @@
   'use strict';
   
   // Check if script already injected
-  if (window.motammemEnhancerInjected) {
+  if (window.motamemEnhancerInjected) {
     return;
   }
-  window.motammemEnhancerInjected = true;
+  window.motamemEnhancerInjected = true;
   
   // Get current page info
   const currentUrl = window.location.href;
@@ -21,23 +21,23 @@
     }
 
     // Remove existing buttons if any
-    const existing = document.getElementById('motammem-enhancer-buttons');
+    const existing = document.getElementById('motamem-enhancer-buttons');
     if (existing) existing.remove();
     
     const container = document.createElement('div');
-    container.id = 'motammem-enhancer-buttons';
-    container.className = 'motammem-enhancer-container';
+    container.id = 'motamem-enhancer-buttons';
+    container.className = 'motamem-enhancer-container';
     
     const ICON_TOREAD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.5A2.5 2.5 0 0 1 4.5 3H11v16H4.5A2.5 2.5 0 0 0 2 21.5z"/><path d="M22 5.5A2.5 2.5 0 0 0 19.5 3H13v16h6.5a2.5 2.5 0 0 1 2.5 2.5z"/></svg>';
     const ICON_READ = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.2 7 10 18.2 4.8 13"/></svg>';
 
     const toReadBtn = document.createElement('button');
-    toReadBtn.className = 'motammem-btn motammem-btn-toread';
+    toReadBtn.className = 'motamem-btn motamem-btn-toread';
     toReadBtn.innerHTML = ICON_TOREAD + '<span>To Read</span>';
     toReadBtn.title = 'Add to To Read list';
 
     const readBtn = document.createElement('button');
-    readBtn.className = 'motammem-btn motammem-btn-read';
+    readBtn.className = 'motamem-btn motamem-btn-read';
     readBtn.innerHTML = ICON_READ + '<span>Read</span>';
     readBtn.title = 'Add to Read list';
     
@@ -62,14 +62,14 @@
       });
       
       if (response.success && response.status) {
-        const container = document.getElementById('motammem-enhancer-buttons');
+        const container = document.getElementById('motamem-enhancer-buttons');
         if (container) {
           if (response.status === 'toRead') {
             container.classList.add('status-toread');
-            container.querySelector('.motammem-btn-toread').classList.add('active');
+            container.querySelector('.motamem-btn-toread').classList.add('active');
           } else if (response.status === 'read') {
             container.classList.add('status-read');
-            container.querySelector('.motammem-btn-read').classList.add('active');
+            container.querySelector('.motamem-btn-read').classList.add('active');
           }
         }
       }
@@ -130,7 +130,7 @@
   // Show notification
   function showNotification(message, isError = false) {
     const notification = document.createElement('div');
-    notification.className = `motammem-notification ${isError ? 'error' : 'success'}`;
+    notification.className = `motamem-notification ${isError ? 'error' : 'success'}`;
     notification.textContent = message;
     document.body.appendChild(notification);
     
@@ -203,13 +203,13 @@
     }
     
     const tooltip = document.createElement('div');
-    tooltip.className = 'motammem-hover-tooltip';
+    tooltip.className = 'motamem-hover-tooltip';
     tooltip.innerHTML = `
-      <button class="motammem-hover-btn" data-action="toRead">
+      <button class="motamem-hover-btn" data-action="toRead">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.5A2.5 2.5 0 0 1 4.5 3H11v16H4.5A2.5 2.5 0 0 0 2 21.5z"/><path d="M22 5.5A2.5 2.5 0 0 0 19.5 3H13v16h6.5a2.5 2.5 0 0 1 2.5 2.5z"/></svg>
         <span>To Read</span>
       </button>
-      <button class="motammem-hover-btn" data-action="read">
+      <button class="motamem-hover-btn" data-action="read">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.2 7 10 18.2 4.8 13"/></svg>
         <span>Read</span>
       </button>
@@ -225,7 +225,7 @@
     tooltip.style.left = `${rect.left + window.scrollX + (rect.width / 2) - (tooltipRect.width / 2)}px`;
     
     // Add click handlers
-    tooltip.querySelectorAll('.motammem-hover-btn').forEach(btn => {
+    tooltip.querySelectorAll('.motamem-hover-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();

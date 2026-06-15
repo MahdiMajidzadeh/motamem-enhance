@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Motammem Blog Enhancer",
+  "name": "Motamem Blog Enhancer",
   "version": "1.0.0",
   "description": "Save and manage blog posts to read and read lists",
   "permissions": [

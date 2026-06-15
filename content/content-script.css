@@ -2,9 +2,9 @@
    Selectors are namespaced and properties set explicitly so the host page's
    CSS can't bleed into the extension UI. */
 
-.motammem-enhancer-container,
-.motammem-notification,
-.motammem-hover-tooltip {
+.motamem-enhancer-container,
+.motamem-notification,
+.motamem-hover-tooltip {
   --mm-toread: #f59e0b;     /* amber — To Read (pending) */
   --mm-toread-2: #fbbf24;
   --mm-read: #1ea01e;       /* green — Read (done), matches motamem.org */
@@ -19,9 +19,9 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  .motammem-enhancer-container,
-  .motammem-notification,
-  .motammem-hover-tooltip {
+  .motamem-enhancer-container,
+  .motamem-notification,
+  .motamem-hover-tooltip {
     --mm-surface: #202422;
     --mm-text: #e9efe9;
     --mm-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
@@ -29,7 +29,7 @@
 }
 
 /* ── Floating action buttons ────────────────────── */
-.motammem-enhancer-container {
+.motamem-enhancer-container {
   position: fixed;
   bottom: 22px;
   right: 22px;
@@ -41,7 +41,7 @@
   padding: 0;
 }
 
-.motammem-btn {
+.motamem-btn {
   display: inline-flex;
   align-items: center;
   gap: 9px;
@@ -61,28 +61,28 @@
   -webkit-font-smoothing: antialiased;
 }
 
-.motammem-btn svg {
+.motamem-btn svg {
   width: 17px;
   height: 17px;
   flex-shrink: 0;
 }
 
-.motammem-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(16, 24, 40, 0.26); filter: brightness(1.05); }
-.motammem-btn:active { transform: translateY(0); }
+.motamem-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(16, 24, 40, 0.26); filter: brightness(1.05); }
+.motamem-btn:active { transform: translateY(0); }
 
-.motammem-btn-toread { background: linear-gradient(135deg, var(--mm-toread-2), var(--mm-toread)); }
-.motammem-btn-read { background: linear-gradient(135deg, var(--mm-read-2), var(--mm-read)); }
+.motamem-btn-toread { background: linear-gradient(135deg, var(--mm-toread-2), var(--mm-toread)); }
+.motamem-btn-read { background: linear-gradient(135deg, var(--mm-read-2), var(--mm-read)); }
 
 /* Already-saved state */
-.motammem-btn.active {
+.motamem-btn.active {
   background: linear-gradient(135deg, var(--mm-read-2), var(--mm-read));
   box-shadow: 0 0 0 3px rgba(34, 165, 34, 0.3), var(--mm-shadow);
 }
 
-.motammem-btn span { font-size: 14px; font-weight: 600; }
+.motamem-btn span { font-size: 14px; font-weight: 600; }
 
 /* ── Toast notification ─────────────────────────── */
-.motammem-notification {
+.motamem-notification {
   position: fixed;
   top: 22px;
   right: 22px;
@@ -99,12 +99,12 @@
   transition: opacity 0.28s ease, transform 0.28s ease;
 }
 
-.motammem-notification.show { opacity: 1; transform: translateY(0); }
-.motammem-notification.success { background: linear-gradient(135deg, var(--mm-read-2), var(--mm-read)); }
-.motammem-notification.error { background: linear-gradient(135deg, #f87171, #ef4444); }
+.motamem-notification.show { opacity: 1; transform: translateY(0); }
+.motamem-notification.success { background: linear-gradient(135deg, var(--mm-read-2), var(--mm-read)); }
+.motamem-notification.error { background: linear-gradient(135deg, #f87171, #ef4444); }
 
 /* ── Hover quick-add tooltip ────────────────────── */
-.motammem-hover-tooltip {
+.motamem-hover-tooltip {
   position: absolute;
   z-index: 2147483002;
   display: flex;
@@ -119,9 +119,9 @@
   pointer-events: auto;
 }
 
-.motammem-hover-tooltip.show { opacity: 1; transform: translateY(0) scale(1); }
+.motamem-hover-tooltip.show { opacity: 1; transform: translateY(0) scale(1); }
 
-.motammem-hover-btn {
+.motamem-hover-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -137,10 +137,10 @@
   white-space: nowrap;
 }
 
-.motammem-hover-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
-.motammem-hover-btn:hover { transform: translateY(-1px); filter: brightness(1.06); }
+.motamem-hover-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+.motamem-hover-btn:hover { transform: translateY(-1px); filter: brightness(1.06); }
 
-.motammem-hover-btn[data-action="toRead"] { background: linear-gradient(135deg, var(--mm-toread-2), var(--mm-toread)); }
-.motammem-hover-btn[data-action="read"] { background: linear-gradient(135deg, var(--mm-read-2), var(--mm-read)); }
+.motamem-hover-btn[data-action="toRead"] { background: linear-gradient(135deg, var(--mm-toread-2), var(--mm-toread)); }
+.motamem-hover-btn[data-action="read"] { background: linear-gradient(135deg, var(--mm-read-2), var(--mm-read)); }
 
-.motammem-hover-btn span { font-size: 13px; font-weight: 600; }
+.motamem-hover-btn span { font-size: 13px; font-weight: 600; }
