@@ -5,6 +5,55 @@ const STORAGE_KEYS = {
   READ: 'read'
 };
 
+// Query params that identify a campaign/click rather than the content itself.
+// Two URLs that differ only by these point at the same post.
+const TRACKING_PARAMS = [
+  'fbclid', 'gclid', 'gbraid', 'wbraid', 'msclkid', 'yclid',
+  'mc_cid', 'mc_eid', 'igshid', 'ref', 'ref_src', 'source', 'spm'
+];
+
+/**
+ * Clean a URL into the canonical form we store and display: drop the fragment
+ * and tracking params, and remove a trailing slash. The protocol, host casing,
+ * and meaningful query params are preserved so the link still resolves.
+ */
+function normalizeUrl(rawUrl) {
+  try {
+    const u = new URL(rawUrl);
+    u.hash = '';
+    for (const key of [...u.searchParams.keys()]) {
+      if (key.toLowerCase().startsWith('utm_') || TRACKING_PARAMS.includes(key.toLowerCase())) {
+        u.searchParams.delete(key);
+      }
+    }
+    if (u.pathname.length > 1 && u.pathname.endsWith('/')) {
+      u.pathname = u.pathname.replace(/\/+$/, '');
+    }
+    return u.toString();
+  } catch {
+    return rawUrl; // not a parseable URL — leave it untouched
+  }
+}
+
+/**
+ * Derive a comparison key for duplicate detection. Stricter than normalizeUrl:
+ * also protocol-agnostic (http == https), strips a leading "www.", and sorts
+ * the remaining query params so order doesn't matter. Used only for matching,
+ * never stored — so it also matches posts saved before normalization existed.
+ */
+function urlKey(rawUrl) {
+  try {
+    const u = new URL(normalizeUrl(rawUrl));
+    const host = u.hostname.replace(/^www\./, '').toLowerCase();
+    const path = u.pathname.replace(/\/+$/, '') || '/';
+    const params = [...u.searchParams.entries()].sort();
+    const search = params.length ? '?' + params.map(([k, v]) => `${k}=${v}`).join('&') : '';
+    return host + path + search;
+  } catch {
+    return rawUrl;
+  }
+}
+
 /**
  * Serialize mutating operations so concurrent requests can't interleave their
  * read-modify-write sequences and clobber each other's writes.
@@ -55,14 +104,15 @@ async function initStorage() {
 async function addToRead(url, title) {
   return withLock(async () => {
     const { toRead, read } = await _getLists();
+    const key = urlKey(url);
 
-    if (toRead.some(item => item.url === url)) {
+    if (toRead.some(item => urlKey(item.url) === key)) {
       throw new Error('Post already in "to read" list');
     }
 
     // Remove from "read" list if it exists there, then prepend to "to read".
-    const newRead = read.filter(item => item.url !== url);
-    const newToRead = [{ url, title: title || url, addedAt: Date.now() }, ...toRead];
+    const newRead = read.filter(item => urlKey(item.url) !== key);
+    const newToRead = [{ url: normalizeUrl(url), title: title || url, addedAt: Date.now() }, ...toRead];
 
     await chrome.storage.local.set({
       [STORAGE_KEYS.TO_READ]: newToRead,
@@ -78,14 +128,15 @@ async function addToRead(url, title) {
 async function addToReadList(url, title) {
   return withLock(async () => {
     const { toRead, read } = await _getLists();
+    const key = urlKey(url);
 
-    if (read.some(item => item.url === url)) {
+    if (read.some(item => urlKey(item.url) === key)) {
       throw new Error('Post already in "read" list');
     }
 
     // Remove from "to read" list if it exists there, then prepend to "read".
-    const newToRead = toRead.filter(item => item.url !== url);
-    const newRead = [{ url, title: title || url, addedAt: Date.now() }, ...read];
+    const newToRead = toRead.filter(item => urlKey(item.url) !== key);
+    const newRead = [{ url: normalizeUrl(url), title: title || url, addedAt: Date.now() }, ...read];
 
     await chrome.storage.local.set({
       [STORAGE_KEYS.TO_READ]: newToRead,
@@ -100,11 +151,12 @@ async function addToReadList(url, title) {
  */
 async function removeFromList(url, listType) {
   return withLock(async () => {
-    const key = listType === 'toRead' ? STORAGE_KEYS.TO_READ : STORAGE_KEYS.READ;
-    const data = await chrome.storage.local.get([key]);
-    const list = data[key] || [];
+    const storageKey = listType === 'toRead' ? STORAGE_KEYS.TO_READ : STORAGE_KEYS.READ;
+    const data = await chrome.storage.local.get([storageKey]);
+    const list = data[storageKey] || [];
+    const key = urlKey(url);
 
-    await chrome.storage.local.set({ [key]: list.filter(item => item.url !== url) });
+    await chrome.storage.local.set({ [storageKey]: list.filter(item => urlKey(item.url) !== key) });
     return true;
   });
 }
@@ -120,13 +172,14 @@ async function movePost(url, fromList, toList) {
     const data = await chrome.storage.local.get([fromKey, toKey]);
     const fromListData = data[fromKey] || [];
     const toListData = data[toKey] || [];
+    const key = urlKey(url);
 
-    const post = fromListData.find(item => item.url === url);
+    const post = fromListData.find(item => urlKey(item.url) === key);
     if (!post) {
       throw new Error('Post not found in source list');
     }
 
-    const filteredFrom = fromListData.filter(item => item.url !== url);
+    const filteredFrom = fromListData.filter(item => urlKey(item.url) !== key);
     const updatedPost = { ...post, addedAt: Date.now() };
 
     await chrome.storage.local.set({
@@ -163,8 +216,9 @@ async function getAllPosts(listType, page = 1, pageSize = 20) {
  */
 async function getPostStatus(url) {
   const { toRead, read } = await _getLists();
-  if (toRead.some(item => item.url === url)) return 'toRead';
-  if (read.some(item => item.url === url)) return 'read';
+  const key = urlKey(url);
+  if (toRead.some(item => urlKey(item.url) === key)) return 'toRead';
+  if (read.some(item => urlKey(item.url) === key)) return 'read';
   return null;
 }
 
@@ -196,16 +250,31 @@ async function importData(jsonData) {
   }
 
   return withLock(async () => {
-    // Merge with existing data, avoiding duplicates.
+    // Merge with existing data, avoiding duplicates by normalized key. The
+    // `seen` set grows as we go so duplicates within the imported file (and
+    // across its two lists) are skipped too, not just collisions with existing
+    // posts.
     const { toRead: existingToRead, read: existingRead } = await _getLists();
 
-    const existingUrls = new Set([
-      ...existingToRead.map(p => p.url),
-      ...existingRead.map(p => p.url)
+    const seen = new Set([
+      ...existingToRead.map(p => urlKey(p.url)),
+      ...existingRead.map(p => urlKey(p.url))
     ]);
 
-    const newToRead = imported.toRead.filter(p => p && !existingUrls.has(p.url));
-    const newRead = imported.read.filter(p => p && !existingUrls.has(p.url));
+    const dedupe = (list) => {
+      const out = [];
+      for (const p of list) {
+        if (!p || !p.url) continue;
+        const key = urlKey(p.url);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({ ...p, url: normalizeUrl(p.url) });
+      }
+      return out;
+    };
+
+    const newToRead = dedupe(imported.toRead);
+    const newRead = dedupe(imported.read);
 
     await chrome.storage.local.set({
       [STORAGE_KEYS.TO_READ]: [...newToRead, ...existingToRead],
