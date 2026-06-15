@@ -23,14 +23,17 @@
     container.id = 'motammem-enhancer-buttons';
     container.className = 'motammem-enhancer-container';
     
+    const ICON_TOREAD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.5A2.5 2.5 0 0 1 4.5 3H11v16H4.5A2.5 2.5 0 0 0 2 21.5z"/><path d="M22 5.5A2.5 2.5 0 0 0 19.5 3H13v16h6.5a2.5 2.5 0 0 1 2.5 2.5z"/></svg>';
+    const ICON_READ = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.2 7 10 18.2 4.8 13"/></svg>';
+
     const toReadBtn = document.createElement('button');
     toReadBtn.className = 'motammem-btn motammem-btn-toread';
-    toReadBtn.innerHTML = '<span>📖</span> To Read';
+    toReadBtn.innerHTML = ICON_TOREAD + '<span>To Read</span>';
     toReadBtn.title = 'Add to To Read list';
-    
+
     const readBtn = document.createElement('button');
     readBtn.className = 'motammem-btn motammem-btn-read';
-    readBtn.innerHTML = '<span>✓</span> Read';
+    readBtn.innerHTML = ICON_READ + '<span>Read</span>';
     readBtn.title = 'Add to Read list';
     
     container.appendChild(toReadBtn);
@@ -192,10 +195,12 @@
     tooltip.className = 'motammem-hover-tooltip';
     tooltip.innerHTML = `
       <button class="motammem-hover-btn" data-action="toRead">
-        <span>📖</span> To Read
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.5A2.5 2.5 0 0 1 4.5 3H11v16H4.5A2.5 2.5 0 0 0 2 21.5z"/><path d="M22 5.5A2.5 2.5 0 0 0 19.5 3H13v16h6.5a2.5 2.5 0 0 1 2.5 2.5z"/></svg>
+        <span>To Read</span>
       </button>
       <button class="motammem-hover-btn" data-action="read">
-        <span>✓</span> Read
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.2 7 10 18.2 4.8 13"/></svg>
+        <span>Read</span>
       </button>
     `;
     

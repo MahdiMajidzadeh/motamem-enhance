@@ -3,56 +3,85 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Motammem Enhancer</title>
+  <title>Motamem Enhancer</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <div class="popup-container">
-    <header class="popup-header">
-      <h1>Motammem Enhancer</h1>
+  <div class="popup">
+    <header class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 4h11a2 2 0 0 1 2 2v14l-5-3-5 3V6a2 2 0 0 0-2-2H6z"/>
+          <path d="M6 4a2 2 0 0 0-2 2v13"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>Motamem</h1>
+        <span class="brand-sub">Blog Enhancer</span>
+      </div>
     </header>
-    
-    <div class="popup-content">
-      <div id="current-page-status" class="status-section">
-        <p class="status-text">Checking current page...</p>
+
+    <div class="popup-body">
+      <div id="current-page-status" class="status">
+        <p class="status-text">Checking current page…</p>
       </div>
-      
-      <div class="actions-section">
-        <button id="add-to-read" class="action-btn btn-toread">
-          <span>📖</span> Add to To Read
+
+      <div class="actions-section actions">
+        <button id="add-to-read" class="action-btn btn-toread action action-toread">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2 5.5A2.5 2.5 0 0 1 4.5 3H11v16H4.5A2.5 2.5 0 0 0 2 21.5z"/>
+            <path d="M22 5.5A2.5 2.5 0 0 0 19.5 3H13v16h6.5a2.5 2.5 0 0 1 2.5 2.5z"/>
+          </svg>
+          <span>To Read</span>
         </button>
-        <button id="add-to-read-list" class="action-btn btn-read">
-          <span>✓</span> Add to Read
+        <button id="add-to-read-list" class="action-btn btn-read action action-read">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21.2 7 10 18.2 4.8 13"/>
+          </svg>
+          <span>Read</span>
         </button>
       </div>
-      
-      <div class="stats-section">
-        <div class="stat-item">
-          <span class="stat-label">To Read:</span>
+
+      <div class="stats-section stats">
+        <div class="stat-item stat">
           <span id="toread-count" class="stat-value">0</span>
+          <span class="stat-label">To Read</span>
         </div>
-        <div class="stat-item">
-          <span class="stat-label">Read:</span>
+        <div class="stat-divider" aria-hidden="true"></div>
+        <div class="stat-item stat">
           <span id="read-count" class="stat-value">0</span>
+          <span class="stat-label">Read</span>
         </div>
       </div>
-      
-      <div class="links-section">
-        <a id="view-saved" href="#" class="link-btn">View Saved Posts</a>
-      </div>
-      
-      <div class="export-section">
-        <button id="export-btn" class="export-btn">Export</button>
-        <button id="import-btn" class="import-btn">Import</button>
-        <input type="file" id="import-file" accept=".json" style="display: none;">
+
+      <a id="view-saved" href="#" class="link-btn view-all">
+        <span>View saved posts</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14M13 6l6 6-6 6"/>
+        </svg>
+      </a>
+
+      <div class="export-section tools">
+        <button id="export-btn" class="export-btn tool">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3v12M8 11l4 4 4-4M5 21h14"/>
+          </svg>
+          Export
+        </button>
+        <button id="import-btn" class="import-btn tool">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 15V3M8 7l4-4 4 4M5 21h14"/>
+          </svg>
+          Import
+        </button>
+        <input type="file" id="import-file" accept=".json" hidden>
       </div>
     </div>
-    
+
     <div id="notification" class="notification"></div>
   </div>
-  
+
   <script src="../shared/utils.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
-

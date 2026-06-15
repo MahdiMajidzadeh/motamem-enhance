@@ -150,6 +150,7 @@ function createPostItem(post) {
   titleLink.href = href;
   titleLink.target = '_blank';
   titleLink.rel = 'noopener';
+  titleLink.dir = 'auto'; // let the browser pick LTR/RTL per title (posts are Persian)
   titleLink.textContent = title;
   titleWrap.appendChild(titleLink);
 
