@@ -89,16 +89,3 @@ function isExcludedMotamemUrl(input) {
   return EXACT.includes(path);
 }
 
-/**
- * Check if URL is a valid post URL (basic check)
- */
-function isPostUrl(url) {
-  try {
-    const urlObj = new URL(url);
-    // Check if it's not the homepage and has a path
-    return urlObj.pathname !== '/' && urlObj.pathname.length > 1;
-  } catch {
-    return false;
-  }
-}
-
