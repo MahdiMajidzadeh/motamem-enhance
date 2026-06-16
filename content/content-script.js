@@ -12,6 +12,22 @@
   // Get current page info
   const currentUrl = window.location.href;
   const currentTitle = document.title || '';
+
+  // After the extension is reloaded/updated/disabled, content scripts already
+  // running on open tabs are orphaned: chrome.runtime.* still exists but any
+  // call throws "Extension context invalidated". Guard messaging on this so we
+  // fail quietly instead of spamming the console.
+  function isExtensionContextValid() {
+    try {
+      return Boolean(chrome.runtime && chrome.runtime.id);
+    } catch {
+      return false;
+    }
+  }
+
+  function isContextInvalidatedError(error) {
+    return error && /Extension context invalidated/i.test(error.message || '');
+  }
   
   // Create floating action buttons
   function createFloatingButtons() {
@@ -55,12 +71,13 @@
   
   // Check if current post is already saved
   async function checkPostStatus() {
+    if (!isExtensionContextValid()) return;
     try {
       const response = await chrome.runtime.sendMessage({
         action: 'getPostStatus',
         url: currentUrl
       });
-      
+
       if (response.success && response.status) {
         const container = document.getElementById('motamem-enhancer-buttons');
         if (container) {
@@ -74,12 +91,18 @@
         }
       }
     } catch (error) {
+      // Orphaned content script after an extension reload: expected, not a bug.
+      if (isContextInvalidatedError(error)) return;
       console.error('Error checking post status:', error);
     }
   }
   
   // Handle adding to list
   async function handleAddToList(listType) {
+    if (!isExtensionContextValid()) {
+      showNotification('Extension was reloaded — please refresh the page', true);
+      return;
+    }
     try {
       const title = extractPostTitle();
       const action = listType === 'toRead' ? 'addToRead' : 'addToReadList';
@@ -232,7 +255,13 @@
         const action = btn.dataset.action;
         const url = link.href;
         const title = link.textContent.trim() || link.href;
-        
+
+        if (!isExtensionContextValid()) {
+          showNotification('Extension was reloaded — please refresh the page', true);
+          hideHoverTooltip();
+          return;
+        }
+
         try {
           const msgAction = action === 'toRead' ? 'addToRead' : 'addToReadList';
           const response = await chrome.runtime.sendMessage({
@@ -325,11 +354,17 @@
     setupLinkHover();
   }
   
-  // Re-check status when page becomes visible
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
-      checkPostStatus();
+  // Re-check status when page becomes visible. If the extension has since been
+  // reloaded, this script is orphaned — stop listening so we don't keep firing
+  // doomed messages every time the tab regains focus.
+  function onVisibilityChange() {
+    if (document.hidden) return;
+    if (!isExtensionContextValid()) {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      return;
     }
-  });
+    checkPostStatus();
+  }
+  document.addEventListener('visibilitychange', onVisibilityChange);
 })();
 
