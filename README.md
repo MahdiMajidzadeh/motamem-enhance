@@ -1,16 +1,22 @@
 # Motamem Blog Enhancer
 
+*[فارسی](README.fa.md) | English*
+
 Save and organize posts from the [motamem.org](https://motamem.org) blog into your own **To Read** and **Read** lists — your personal read-it-later, right inside the browser.
 
 ## What it does
 
 - 📌 Save any post to a **To Read** or **Read** list while you browse
 - 🗂️ Browse all your saved posts on a clean full-page view, split into **To Read** and **Read** tabs
+- 🏷️ **Label** posts to organize them by topic — each label gets its own distinct color automatically
+- 📝 Add a personal **note** to any saved post
+- 🔍 **Search** your saved posts by title, note, or label
+- 📊 A **Stats** tab with a monthly reading report — a stacked column chart (Read vs. To Read) broken down by label, with counts on every segment
 - 🔄 Move posts between lists, or remove them when you're done
-- 💾 Export your lists to a file and import them back later (great for backups or switching computers)
+- 💾 Export your lists to a file and import them back later (labels and notes are included, so nothing is lost)
 - 🧠 Smart about duplicates — saving the same post twice won't clutter your list
 - 🌗 **Light, Dark, or System** theme, styled to match the motamem.org look
-- 🌍 Reads beautifully in Persian and English
+- 🌍 **Fully bilingual** — switch between Persian and English with one click; Persian mode uses Persian digits and the Vazirmatn font throughout
 
 ## Installing
 
@@ -35,8 +41,23 @@ There are three easy ways to save:
 ### Viewing your saved posts
 
 - Click the Motamem icon, then **View saved posts** to open the full list.
-- Switch between the **To Read** and **Read** tabs, and page through your posts.
+- Switch between the **To Read**, **Read**, and **Stats** tabs, and page through your posts.
 - Click a post's title to open it in a new tab.
+- Use the **search bar** at the top to quickly find a post by title, note, or label.
+
+### Labels and notes
+
+- Click **🏷️ Label** on any post to tag it with one or more topics — pick from your existing labels or type a new one. Each label automatically gets its own color, and no two labels ever share the same color.
+- Use the label chips above the list to filter to a single topic, or delete a label entirely (removing it from every post).
+- Click **📝 Add note** on any post to jot down your own thoughts about it. Click **Edit** any time to change it.
+
+### Monthly stats
+
+Open the **Stats** tab to see a report for any month:
+
+- Three summary cards: total saved, total read, and total still to read.
+- A **stacked column chart** — one column for Read, one for To Read — each divided into colored segments by label, with the exact count shown on every segment (and the exact count + label for every segment listed below the chart too).
+- Use the arrows to move between months.
 
 ### Keeping your lists tidy
 
@@ -44,13 +65,13 @@ There are three easy ways to save:
 - **Changed your mind?** Use **Move to To Read** to send it back.
 - **Don't need it anymore?** Click **Remove**.
 
-### Changing the theme
+### Changing the theme or language
 
-Click the theme button in the top-right of the popup to switch between **System**, **Light**, and **Dark**. Your choice is remembered and used everywhere in the extension.
+Use the theme button in the top-right to switch between **System**, **Light**, and **Dark**, and the language button (**FA / EN**) to switch between Persian and English. Both choices are remembered and used everywhere in the extension — including layout direction (right-to-left for Persian, left-to-right for English).
 
 ### Backing up your posts
 
-- **Export** saves all your lists to a file you can keep safe.
+- **Export** saves all your lists — including labels and notes — to a file you can keep safe.
 - **Import** loads a file back in. Posts you already have are skipped, so nothing gets duplicated.
 
 Both buttons are available in the popup and on the saved-posts page.
