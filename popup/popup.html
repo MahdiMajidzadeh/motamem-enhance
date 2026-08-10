@@ -1,10 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Motamem Enhancer</title>
+  <title data-i18n="appTitle">افزونه متمم</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="../shared/theme.js"></script>
+  <script src="../shared/i18n.js"></script>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
@@ -17,15 +21,16 @@
         </svg>
       </div>
       <div class="brand-text">
-        <h1>Motamem</h1>
-        <span class="brand-sub">Blog Enhancer</span>
+        <h1 data-i18n="brandName">متمم</h1>
+        <span class="brand-sub" data-i18n="brandSub">افزونه متمم</span>
       </div>
-      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Theme"></button>
+      <button id="lang-toggle" class="lang-toggle" type="button" data-i18n-aria="langAria"></button>
+      <button id="theme-toggle" class="theme-toggle" type="button" data-i18n-aria="themeAria"></button>
     </header>
 
     <div class="popup-body">
       <div id="current-page-status" class="status">
-        <p class="status-text">Checking current page…</p>
+        <p class="status-text" data-i18n="checkingPage">در حال بررسی صفحه فعلی…</p>
       </div>
 
       <div class="actions-section actions">
@@ -34,30 +39,30 @@
             <path d="M2 5.5A2.5 2.5 0 0 1 4.5 3H11v16H4.5A2.5 2.5 0 0 0 2 21.5z"/>
             <path d="M22 5.5A2.5 2.5 0 0 0 19.5 3H13v16h6.5a2.5 2.5 0 0 1 2.5 2.5z"/>
           </svg>
-          <span>To Read</span>
+          <span data-i18n="toRead">برای خواندن</span>
         </button>
         <button id="add-to-read-list" class="action-btn btn-read action action-read">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M21.2 7 10 18.2 4.8 13"/>
           </svg>
-          <span>Read</span>
+          <span data-i18n="read">خوانده‌شده</span>
         </button>
       </div>
 
       <div class="stats-section stats">
         <div class="stat-item stat">
           <span id="toread-count" class="stat-value">0</span>
-          <span class="stat-label">To Read</span>
+          <span class="stat-label" data-i18n="toRead">برای خواندن</span>
         </div>
         <div class="stat-divider" aria-hidden="true"></div>
         <div class="stat-item stat">
           <span id="read-count" class="stat-value">0</span>
-          <span class="stat-label">Read</span>
+          <span class="stat-label" data-i18n="read">خوانده‌شده</span>
         </div>
       </div>
 
       <a id="view-saved" href="#" class="link-btn view-all">
-        <span>View saved posts</span>
+        <span data-i18n="viewSavedPosts">مشاهده پست‌های ذخیره‌شده</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M5 12h14M13 6l6 6-6 6"/>
         </svg>
@@ -68,13 +73,13 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M12 3v12M8 11l4 4 4-4M5 21h14"/>
           </svg>
-          Export
+          <span data-i18n="export">خروجی</span>
         </button>
         <button id="import-btn" class="import-btn tool">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M12 15V3M8 7l4-4 4 4M5 21h14"/>
           </svg>
-          Import
+          <span data-i18n="import">ورودی</span>
         </button>
         <input type="file" id="import-file" accept=".json" hidden>
       </div>
