@@ -2,8 +2,9 @@
 
 /**
  * Format timestamp to a readable, localized date string.
- * lang: 'en' (default) or 'fa' — Persian output uses Persian digits and
- * month names, but keeps the Gregorian calendar (no Jalali conversion).
+ * lang: 'en' (default) or 'fa' — Persian output uses Persian digits and the
+ * Jalali (Solar Hijri) calendar, so a date reads the way an Iranian reader
+ * expects: ۲۱ مرداد ۱۴۰۵, not ۱۲ اوت ۲۰۲۶.
  */
 function formatDate(timestamp, lang) {
   lang = lang === 'fa' ? 'fa' : 'en';
@@ -24,7 +25,9 @@ function formatDate(timestamp, lang) {
     if (minutes < 60) return `${num(minutes)} دقیقه پیش`;
     if (hours < 24) return `${num(hours)} ساعت پیش`;
     if (days < 7) return `${num(days)} روز پیش`;
-    return date.toLocaleDateString('fa-IR-u-ca-gregory', { year: 'numeric', month: 'long', day: 'numeric' });
+    // -u-ca-persian is explicit rather than relying on fa-IR's default, so the
+    // calendar can't change under us if ICU's locale defaults ever shift.
+    return date.toLocaleDateString('fa-IR-u-ca-persian', { year: 'numeric', month: 'long', day: 'numeric' });
   }
 
   if (seconds < 60) {

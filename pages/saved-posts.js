@@ -674,6 +674,12 @@ function shiftMonthKey(key, delta) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
+// Deliberately Gregorian even in Persian, unlike formatDate() in shared/utils.js
+// which now uses Jalali. The Stats tab buckets posts by Gregorian month
+// (monthKeyOf in shared/storage.js keys on getFullYear/getMonth), and a Jalali
+// month straddles two Gregorian ones — labelling the August bucket "مرداد" would
+// claim a range the numbers don't cover. Making these Jalali means re-keying the
+// buckets themselves, not just relabelling.
 function currentLocale() {
   return (window.MMI18n && window.MMI18n.get() === 'fa') ? 'fa-IR-u-ca-gregory' : 'en-US';
 }
@@ -981,7 +987,6 @@ function createPostItem(post) {
 
   const title = truncateText(post.title, 80);
   const formattedDate = formatDate(post.addedAt, window.MMI18n ? window.MMI18n.get() : 'fa');
-  const domain = getDomain(post.url);
   const href = safeHref(post.url);
 
   const header = document.createElement('div');
@@ -1034,18 +1039,12 @@ function createPostItem(post) {
   const meta = document.createElement('div');
   meta.className = 'post-meta';
 
-  const urlLink = document.createElement('a');
-  urlLink.href = href;
-  urlLink.target = '_blank';
-  urlLink.rel = 'noopener';
-  urlLink.className = 'post-url';
-  urlLink.textContent = domain;
-
+  // No domain shown: every saved post is from motamem.org, so it carried no
+  // information. The title itself is the link.
   const dateSpan = document.createElement('span');
   dateSpan.className = 'post-date';
   dateSpan.textContent = `📅 ${formattedDate}`;
 
-  meta.appendChild(urlLink);
   meta.appendChild(dateSpan);
 
   item.appendChild(header);

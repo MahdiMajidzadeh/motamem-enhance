@@ -823,25 +823,9 @@ div.label-filter-chip.active .label-filter-select .dot { background: #fff; }
   border-top: 1px solid var(--border-color);
 }
 
-.post-url {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-weight: 500;
-  word-break: break-all;
-}
-.post-url::before {
-  content: '';
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--brand-2);
-  flex-shrink: 0;
-}
-.post-url:hover { color: var(--primary-color); }
-
-.post-date { display: inline-flex; align-items: center; gap: 5px; margin-inline-start: auto; }
+/* The date is the only thing left in .post-meta now that the domain is gone,
+   so it sits at the start rather than being pushed to the far end. */
+.post-date { display: inline-flex; align-items: center; gap: 5px; }
 
 /* ── Pagination ─────────────────────────────────── */
 .pagination {
