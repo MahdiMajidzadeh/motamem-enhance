@@ -1,0 +1,71 @@
+/* Bundled IRANSansWeb, shared by the popup, the saved-posts page, and the
+   content script. Fonts ship with the extension (assets/fonts/) rather than
+   loading from a CDN, so the UI renders identically offline and the extension
+   never makes a network request just to draw itself.
+
+   The family is deliberately named "Motamem IRANSans" rather than
+   "IRANSansWeb": this stylesheet is also injected into motamem.org by the
+   content script, where an @font-face rule is page-global. A namespaced name
+   can't collide with — or override — whatever the host page defines for its
+   own text.
+
+   url()s are relative to this file (shared/), which resolves correctly from
+   the extension pages and from the content-script injection alike.
+
+   IRANSansWeb's six cuts are mapped onto the CSS weight scale below. The UI
+   also asks for 600 and 800, which CSS weight matching resolves upward to
+   Bold (700) and Black (900) respectively. */
+
+@font-face {
+  font-family: 'Motamem IRANSans';
+  src: url('../assets/fonts/woff2/IRANSansWeb_UltraLight.woff2') format('woff2'),
+       url('../assets/fonts/woff/IRANSansWeb_UltraLight.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Motamem IRANSans';
+  src: url('../assets/fonts/woff2/IRANSansWeb_Light.woff2') format('woff2'),
+       url('../assets/fonts/woff/IRANSansWeb_Light.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Motamem IRANSans';
+  src: url('../assets/fonts/woff2/IRANSansWeb.woff2') format('woff2'),
+       url('../assets/fonts/woff/IRANSansWeb.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Motamem IRANSans';
+  src: url('../assets/fonts/woff2/IRANSansWeb_Medium.woff2') format('woff2'),
+       url('../assets/fonts/woff/IRANSansWeb_Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Motamem IRANSans';
+  src: url('../assets/fonts/woff2/IRANSansWeb_Bold.woff2') format('woff2'),
+       url('../assets/fonts/woff/IRANSansWeb_Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Motamem IRANSans';
+  src: url('../assets/fonts/woff2/IRANSansWeb_Black.woff2') format('woff2'),
+       url('../assets/fonts/woff/IRANSansWeb_Black.woff') format('woff');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}

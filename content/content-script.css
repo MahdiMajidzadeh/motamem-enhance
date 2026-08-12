@@ -13,7 +13,7 @@
   --mm-text: #1f2620;
   --mm-shadow: 0 8px 24px rgba(16, 24, 40, 0.18);
   box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Roboto, Arial, sans-serif;
+  font-family: 'Motamem IRANSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Roboto, Arial, sans-serif;
   line-height: 1.2;
   direction: ltr;
 }
@@ -51,6 +51,9 @@
   border-radius: 999px;
   background: var(--mm-surface);
   color: #fff;
+  /* Buttons don't inherit font-family from an ancestor on their own — the UA
+     stylesheet sets it — so opt in explicitly to pick up the container's. */
+  font-family: inherit;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -130,6 +133,7 @@
   border: none;
   border-radius: 8px;
   color: #fff;
+  font-family: inherit; /* see .motamem-btn */
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
