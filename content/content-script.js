@@ -535,5 +535,26 @@
     checkPostStatus();
   }
   document.addEventListener('visibilitychange', onVisibilityChange);
+
+  // Keep the card in step with saves made anywhere else: the popup, the
+  // saved-posts page, an import, or another open motamem tab. visibilitychange
+  // can't cover the popup case — opening the popup never hides the tab, so the
+  // card would otherwise sit stale until you switched tabs and came back.
+  //
+  // Key names mirror STORAGE_KEYS in shared/storage.js, which the content
+  // script doesn't load. A single write that touches both lists (adding to one
+  // removes from the other) arrives as one event, so this re-checks once.
+  const WATCHED_STORAGE_KEYS = ['toRead', 'read'];
+  try {
+    if (chrome.storage && chrome.storage.onChanged) {
+      chrome.storage.onChanged.addListener((changes, area) => {
+        if (area !== 'local') return;
+        if (!WATCHED_STORAGE_KEYS.some(key => key in changes)) return;
+        checkPostStatus();
+      });
+    }
+  } catch {
+    // Orphaned content script after an extension reload — nothing to sync to.
+  }
 })();
 
