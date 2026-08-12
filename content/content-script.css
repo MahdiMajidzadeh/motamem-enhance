@@ -168,3 +168,13 @@
 .motamem-hover-btn[data-action="read"] { background: linear-gradient(135deg, var(--mm-read-2), var(--mm-read)); }
 
 .motamem-hover-btn span { font-size: 13px; font-weight: 600; }
+
+/* ── Focus reading mode ─────────────────────────── */
+/* Applied to every element outside #content1 when our replacement for the
+   site's "مطالعه با تمرکز بیشتر" button is active. !important because it has
+   to win against the host page's own rules, and the transition lives here so
+   only the elements we actually touch get one. */
+.motamem-focus-dim {
+  opacity: 0.2 !important;
+  transition: opacity 0.25s ease;
+}

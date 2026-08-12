@@ -439,6 +439,69 @@
     });
   }
   
+  // ── Focus reading mode ──────────────────────────────────────────────────
+  // motamem.org's own "مطالعه با تمرکز بیشتر" button (div.wpcm-subscribe) has a
+  // focus mode we'd rather replace: intercept the click and dim everything
+  // outside #content1 to 30% instead.
+  const FOCUS_TARGET_ID = 'content1';
+  const FOCUS_DIM_CLASS = 'motamem-focus-dim';
+  const FOCUS_ACTIVE_CLASS = 'motamem-focus-active';
+
+  function isFocusModeOn() {
+    return document.body.classList.contains(FOCUS_ACTIVE_CLASS);
+  }
+
+  function focusModeOn() {
+    const target = document.getElementById(FOCUS_TARGET_ID);
+    if (!target) return;
+
+    // Dim each ancestor's *other* children, walking up from the target and
+    // leaving the ancestor chain itself untouched. Opacity composites onto
+    // descendants, so fading a shared ancestor would fade #content1 with it —
+    // dimming siblings level by level is what keeps the target fully opaque.
+    let node = target;
+    while (node.parentElement && node.parentElement !== document.documentElement) {
+      const parent = node.parentElement;
+      for (const sibling of parent.children) {
+        if (sibling !== node) sibling.classList.add(FOCUS_DIM_CLASS);
+      }
+      node = parent;
+    }
+
+    document.body.classList.add(FOCUS_ACTIVE_CLASS);
+  }
+
+  function focusModeOff() {
+    document.querySelectorAll('.' + FOCUS_DIM_CLASS)
+      .forEach(el => el.classList.remove(FOCUS_DIM_CLASS));
+    document.body.classList.remove(FOCUS_ACTIVE_CLASS);
+  }
+
+  function toggleFocusMode() {
+    if (isFocusModeOn()) focusModeOff();
+    else focusModeOn();
+  }
+
+  // Capture phase on document, so this runs before the site's own handler on
+  // the link (which is bound further down the tree) and can cancel it outright.
+  document.addEventListener('click', (e) => {
+    const trigger = e.target && e.target.closest ? e.target.closest('.wpcm-subscribe') : null;
+    if (!trigger) return;
+
+    // If the page has no #content1 there's nothing to focus on — leave the
+    // site's own behaviour alone rather than swallowing the click.
+    if (!document.getElementById(FOCUS_TARGET_ID)) return;
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    toggleFocusMode();
+  }, true);
+
+  // Escape leaves focus mode, so it can't become a state the user is stuck in.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isFocusModeOn()) focusModeOff();
+  });
+
   // Initialize when DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
