@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "Enhanced Motamem",
+  "name": "__MSG_extName__",
   "version": "1.0.0",
-  "description": "Save and manage blog posts to read and read lists",
+  "description": "__MSG_extDescription__",
+  "default_locale": "en",
   "permissions": [
     "storage",
-    "activeTab",
-    "tabs"
+    "activeTab"
   ],
   "host_permissions": [
     "*://motamem.org/*",

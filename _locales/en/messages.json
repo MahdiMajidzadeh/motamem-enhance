@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "Enhanced Motamem (unofficial)",
+    "description": "Extension name shown in the Chrome Web Store, the toolbar tooltip and chrome://extensions."
+  },
+  "extDescription": {
+    "message": "Save motamem.org posts to To Read and Read lists, with labels, notes, search and monthly stats. Persian/English.",
+    "description": "Store listing description. Chrome allows up to 132 characters."
+  }
+}

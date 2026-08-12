@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "متمم بهتر (غیررسمی)",
+    "description": "Extension name shown in the Chrome Web Store, the toolbar tooltip and chrome://extensions."
+  },
+  "extDescription": {
+    "message": "ذخیره‌ی پست‌های متمم در لیست‌های «برای خواندن» و «خوانده‌شده»، همراه با برچسب، یادداشت، جستجو و آمار ماهانه.",
+    "description": "Store listing description. Chrome allows up to 132 characters."
+  }
+}

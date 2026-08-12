@@ -1,4 +1,4 @@
-# Motamem Blog Enhancer
+# Enhanced Motamem (unofficial)
 
 *[فارسی](README.fa.md) | English*
 
@@ -16,7 +16,7 @@ Save and organize posts from the [motamem.org](https://motamem.org) blog into yo
 - 💾 Export your lists to a file and import them back later (labels and notes are included, so nothing is lost)
 - 🧠 Smart about duplicates — saving the same post twice won't clutter your list
 - 🌗 **Light, Dark, or System** theme, styled to match the motamem.org look
-- 🌍 **Fully bilingual** — switch between Persian and English with one click; Persian mode uses Persian digits and the Vazirmatn font throughout
+- 🌍 **Fully bilingual** — switch between Persian and English with one click; Persian mode uses Persian digits, Jalali dates, and the IRANSans font throughout
 
 ## Installing
 
@@ -74,7 +74,7 @@ Use the theme button in the top-right to switch between **System**, **Light**, a
 - **Export** saves all your lists — including labels and notes — to a file you can keep safe.
 - **Import** loads a file back in. Posts you already have are skipped, so nothing gets duplicated.
 
-Both buttons are available in the popup and on the saved-posts page.
+Both buttons live on the saved-posts page.
 
 ## Good to know
 
