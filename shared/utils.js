@@ -47,8 +47,11 @@ function formatDate(timestamp, lang) {
  * Truncate text to specified length
  */
 function truncateText(text, maxLength = 100) {
-  if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength) + '...';
+  // Coerced, not assumed: titles can come from an imported file, where a
+  // missing or non-string title would otherwise throw on .length.
+  const str = String(text ?? '');
+  if (str.length <= maxLength) return str;
+  return str.substring(0, maxLength) + '...';
 }
 
 /**
@@ -61,18 +64,6 @@ function truncateText(text, maxLength = 100) {
 function labelColorForIndex(index) {
   const hue = ((index * 137.508) % 360 + 360) % 360; // golden angle ≈ 137.508°
   return `hsl(${hue.toFixed(0)}, 65%, 45%)`;
-}
-
-/**
- * Extract domain from URL
- */
-function getDomain(url) {
-  try {
-    const urlObj = new URL(url);
-    return urlObj.hostname;
-  } catch {
-    return url;
-  }
 }
 
 /**

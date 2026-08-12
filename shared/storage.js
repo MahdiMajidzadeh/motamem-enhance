@@ -13,6 +13,49 @@ const MAX_LABEL_LENGTH = 24;
 /** Max length of a personal note attached to a post. */
 const MAX_NOTE_LENGTH = 2000;
 
+/**
+ * Clean a list of label names: coerce to string, trim, length-cap, dedupe
+ * case-insensitively, and limit how many a post may carry.
+ *
+ * Coercion is the important part, not just tidiness. Everything downstream
+ * calls label.toLowerCase() — getAllPosts' label filter and search, deleteLabel,
+ * setPostLabels — so a single non-string label reaching storage throws a
+ * TypeError and breaks the saved-posts page until storage is repaired. Imported
+ * files are untrusted input, so they go through here too.
+ *
+ * `max` defaults to the per-post limit; pass Infinity for the global label
+ * registry, which isn't bounded the way a single post's label list is.
+ */
+function sanitizeLabelList(labels, max = MAX_LABELS_PER_POST) {
+  if (!Array.isArray(labels)) return [];
+
+  const clean = [];
+  const seenLower = new Set();
+  for (const raw of labels) {
+    // Drop anything that isn't already text-like rather than coercing it — an
+    // object would otherwise land in the UI as the label "[object Object]".
+    if (typeof raw !== 'string' && typeof raw !== 'number') continue;
+    const trimmed = String(raw).trim().slice(0, MAX_LABEL_LENGTH);
+    if (!trimmed) continue;
+    const lower = trimmed.toLowerCase();
+    if (seenLower.has(lower)) continue;
+    seenLower.add(lower);
+    clean.push(trimmed);
+    if (clean.length >= max) break;
+  }
+  return clean;
+}
+
+/**
+ * Clean a note: text-like values are trimmed and capped, anything else becomes
+ * empty. Same reasoning as sanitizeLabelList — coercing an object here would
+ * store the literal text "[object Object]" as the user's note.
+ */
+function sanitizeNote(note) {
+  if (typeof note !== 'string' && typeof note !== 'number') return '';
+  return String(note).trim().slice(0, MAX_NOTE_LENGTH);
+}
+
 // Query params that identify a campaign/click rather than the content itself.
 // Two URLs that differ only by these point at the same post.
 const TRACKING_PARAMS = [
@@ -288,14 +331,25 @@ async function importData(jsonData) {
       ...existingRead.map(p => urlKey(p.url))
     ]);
 
+    // Every field of an imported post is untrusted — the file may have been
+    // hand-edited, truncated, or written by an older version — so labels, note
+    // and title are normalised here rather than copied through with a spread.
     const dedupe = (list) => {
       const out = [];
+      if (!Array.isArray(list)) return out;
       for (const p of list) {
         if (!p || !p.url) continue;
         const key = urlKey(p.url);
         if (seen.has(key)) continue;
         seen.add(key);
-        out.push({ ...p, url: normalizeUrl(p.url) });
+        out.push({
+          ...p,
+          url: normalizeUrl(p.url),
+          title: String(p.title ?? p.url),
+          labels: sanitizeLabelList(p.labels),
+          note: sanitizeNote(p.note),
+          addedAt: Number.isFinite(p.addedAt) ? p.addedAt : Date.now()
+        });
       }
       return out;
     };
@@ -303,20 +357,24 @@ async function importData(jsonData) {
     const newToRead = dedupe(imported.toRead);
     const newRead = dedupe(imported.read);
 
-    // Merge label definitions too (preserves creation order for existing
-    // labels; new ones from the import are appended), so per-label colors
-    // stay stable across an export/import round-trip.
+    // Merge label definitions (preserves creation order for existing labels;
+    // new ones are appended) so per-label colors stay stable across an
+    // export/import round-trip. Labels carried by the imported posts are folded
+    // in as well — a file whose registry is missing or out of date would
+    // otherwise leave those labels unfilterable and undeletable in the UI.
     const existingLabelDefs = await _getLabelDefs();
     const existingLabelsLower = new Set(existingLabelDefs.map(l => l.toLowerCase()));
-    const importedLabelDefs = Array.isArray(imported.labels) ? imported.labels : [];
     const mergedLabelDefs = [...existingLabelDefs];
-    for (const raw of importedLabelDefs) {
-      const trimmed = String(raw || '').trim().slice(0, MAX_LABEL_LENGTH);
-      if (!trimmed) continue;
-      const lower = trimmed.toLowerCase();
+    const incomingLabels = [
+      ...sanitizeLabelList(imported.labels, Infinity),
+      ...newToRead.flatMap(p => p.labels),
+      ...newRead.flatMap(p => p.labels)
+    ];
+    for (const name of incomingLabels) {
+      const lower = name.toLowerCase();
       if (existingLabelsLower.has(lower)) continue;
       existingLabelsLower.add(lower);
-      mergedLabelDefs.push(trimmed);
+      mergedLabelDefs.push(name);
     }
 
     await chrome.storage.local.set({
@@ -395,17 +453,7 @@ async function deleteLabel(name) {
 async function setPostLabels(url, listType, labels) {
   if (!Array.isArray(labels)) throw new Error('labels must be an array');
 
-  const cleanLabels = [];
-  const seenLower = new Set();
-  for (const raw of labels) {
-    const trimmed = String(raw || '').trim().slice(0, MAX_LABEL_LENGTH);
-    if (!trimmed) continue;
-    const lower = trimmed.toLowerCase();
-    if (seenLower.has(lower)) continue;
-    seenLower.add(lower);
-    cleanLabels.push(trimmed);
-    if (cleanLabels.length >= MAX_LABELS_PER_POST) break;
-  }
+  const cleanLabels = sanitizeLabelList(labels);
 
   return withLock(async () => {
     const storageKey = listType === 'toRead' ? STORAGE_KEYS.TO_READ : STORAGE_KEYS.READ;
@@ -445,7 +493,7 @@ async function setPostLabels(url, listType, labels) {
  * string to remove an existing note.
  */
 async function setPostNote(url, listType, note) {
-  const cleanNote = String(note || '').trim().slice(0, MAX_NOTE_LENGTH);
+  const cleanNote = sanitizeNote(note);
 
   return withLock(async () => {
     const storageKey = listType === 'toRead' ? STORAGE_KEYS.TO_READ : STORAGE_KEYS.READ;
@@ -477,12 +525,6 @@ function monthKeyOf(timestamp) {
  * whichever language is active (English "Uncategorized" / Persian
  * "دسته‌بندی نشده"). */
 const UNCATEGORIZED_KEY = '__uncategorized__';
-
-function shiftMonthKeyBy(monthKey, delta) {
-  const [y, m] = monthKey.split('-').map(Number);
-  const d = new Date(y, m - 1 + delta, 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
 
 /**
  * Monthly reading stats for a given 'YYYY-MM' month, grouped by label.
@@ -525,33 +567,3 @@ async function getMonthlyStats(monthKey) {
   };
 }
 
-/**
- * A trailing series of monthly stats (oldest → newest), ending at endMonthKey,
- * for the "last N months" line chart. Reuses getMonthlyStats per month, then
- * reshapes into per-label time series so the front end can draw one line per
- * label plus one aggregate "unread" line.
- */
-async function getMonthlyStatsSeries(endMonthKey, monthsCount = 6) {
-  const monthKeys = [];
-  for (let i = monthsCount - 1; i >= 0; i--) {
-    monthKeys.push(shiftMonthKeyBy(endMonthKey, -i));
-  }
-
-  const monthly = await Promise.all(monthKeys.map(mk => getMonthlyStats(mk)));
-
-  const labelSet = new Set();
-  monthly.forEach(m => m.labels.forEach(l => labelSet.add(l.name)));
-
-  const labels = [...labelSet].sort().map(name => ({
-    name,
-    read: monthly.map(m => (m.labels.find(l => l.name === name) || { read: 0 }).read),
-    unread: monthly.map(m => (m.labels.find(l => l.name === name) || { unread: 0 }).unread)
-  }));
-
-  return {
-    months: monthKeys,
-    totalsRead: monthly.map(m => m.totalRead),
-    totalsUnread: monthly.map(m => m.totalUnread),
-    labels
-  };
-}

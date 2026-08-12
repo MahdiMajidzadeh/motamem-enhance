@@ -71,11 +71,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           sendResponse({ success: true, data: stats });
           break;
 
-        case 'getMonthlyStatsSeries':
-          const series = await getMonthlyStatsSeries(request.endMonth, request.monthsCount);
-          sendResponse({ success: true, data: series });
-          break;
-          
         case 'getPostStatus':
           const status = await getPostStatus(request.url);
           sendResponse({ success: true, status });
