@@ -78,6 +78,9 @@ function setupLangToggle() {
 // Re-render bits of UI that showStatus()/notifications etc. already wrote in
 // the previous language, so a language switch doesn't leave stale text.
 function refreshDynamicText() {
+  // The action buttons' labels are rendered, not data-i18n, so translatePage()
+  // can't reach them once renderSlot() has replaced their markup.
+  renderActionButtons();
   if (currentUrl) {
     checkCurrentPageStatus();
   }
@@ -120,6 +123,59 @@ async function init() {
   setupEventListeners();
 }
 
+// ── Action buttons ─────────────────────────────────
+// Mirrors the in-page card (content/content-script.js): each button owns a
+// fixed slot, and its role depends on where the page is currently saved:
+//   saved in this slot  -> 'remove' (take it out of that list)
+//   saved in the other  -> 'move'   (move it over, keeping labels/notes)
+//   not saved at all    -> 'add'
+const SLOT_BUTTON_IDS = { toRead: 'add-to-read', read: 'add-to-read-list' };
+
+// Icons match the markup in popup.html so a re-render is visually identical.
+const ACTION_ICONS = {
+  toRead: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5.5A2.5 2.5 0 0 1 4.5 3H11v16H4.5A2.5 2.5 0 0 0 2 21.5z"/><path d="M22 5.5A2.5 2.5 0 0 0 19.5 3H13v16h6.5a2.5 2.5 0 0 1 2.5 2.5z"/></svg>',
+  read: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.2 7 10 18.2 4.8 13"/></svg>',
+  remove: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+};
+
+// Which list the current page is saved in: null | 'toRead' | 'read'.
+let savedStatus = null;
+
+function roleFor(slot) {
+  if (savedStatus === slot) return 'remove';
+  return savedStatus ? 'move' : 'add';
+}
+
+function renderActionButtons() {
+  renderSlot('toRead');
+  renderSlot('read');
+}
+
+function renderSlot(slot) {
+  const btn = document.getElementById(SLOT_BUTTON_IDS[slot]);
+  if (!btn) return;
+
+  const isRemove = roleFor(slot) === 'remove';
+  const isToRead = slot === 'toRead';
+
+  const icon = isRemove ? ACTION_ICONS.remove : ACTION_ICONS[slot];
+  const label = isRemove ? t('remove') : (isToRead ? t('toRead') : t('read'));
+  // Replaces the data-i18n span from popup.html, so these labels are refreshed
+  // by renderActionButtons() on a language switch rather than translatePage().
+  btn.innerHTML = icon + '<span>' + label + '</span>';
+
+  btn.classList.toggle('is-remove', isRemove);
+  btn.title = titleFor(slot, isRemove);
+}
+
+function titleFor(slot, isRemove) {
+  const isToRead = slot === 'toRead';
+  if (isRemove) return isToRead ? t('removeFromToReadTitle') : t('removeFromReadTitle');
+  // Saved in the other list, so this button moves it rather than adding.
+  if (savedStatus) return isToRead ? t('moveToToRead') : t('markAsRead');
+  return isToRead ? t('addToToReadTitle') : t('addToReadTitle');
+}
+
 // Check current page status
 async function checkCurrentPageStatus() {
   try {
@@ -127,8 +183,11 @@ async function checkCurrentPageStatus() {
       action: 'getPostStatus',
       url: currentUrl
     });
-    
+
     if (response.success) {
+      savedStatus = (response.status === 'toRead' || response.status === 'read') ? response.status : null;
+      renderActionButtons();
+
       if (response.status === 'toRead') {
         showStatus(t('alreadyInToRead'), true);
       } else if (response.status === 'read') {
@@ -173,15 +232,10 @@ async function loadCounts() {
 
 // Setup event listeners
 function setupEventListeners() {
-  // Add to To Read
-  document.getElementById('add-to-read').addEventListener('click', async () => {
-    await addToList('toRead');
-  });
-  
-  // Add to Read
-  document.getElementById('add-to-read-list').addEventListener('click', async () => {
-    await addToList('read');
-  });
+  // Each button owns a fixed slot; what it does depends on where the page is
+  // currently saved (see roleFor).
+  document.getElementById('add-to-read').addEventListener('click', () => handleSlotClick('toRead'));
+  document.getElementById('add-to-read-list').addEventListener('click', () => handleSlotClick('read'));
   
   // View saved posts
   document.getElementById('view-saved').addEventListener('click', (e) => {
@@ -189,92 +243,55 @@ function setupEventListeners() {
     chrome.tabs.create({ url: chrome.runtime.getURL('pages/saved-posts.html') });
     window.close();
   });
-  
-  // Export
-  document.getElementById('export-btn').addEventListener('click', handleExport);
-  
-  // Import
-  document.getElementById('import-btn').addEventListener('click', () => {
-    document.getElementById('import-file').click();
-  });
-  
-  document.getElementById('import-file').addEventListener('change', handleImport);
 }
 
-// Add to list
-async function addToList(listType) {
+// Add / move / remove, depending on what the clicked slot currently means.
+// Mirrors handleSlotClick() in content/content-script.js — same roles, same
+// requests — so the popup and the in-page card behave identically.
+// Deliberately silent on success: the button flipping to or from Remove, plus
+// the status line and counts updating, is the feedback. Only failures notify.
+async function handleSlotClick(slot) {
   if (!currentUrl) return;
-  
+
+  const role = roleFor(slot);
   try {
-    const title = currentTab?.title || currentUrl;
-    const action = listType === 'toRead' ? 'addToRead' : 'addToReadList';
-    
-    const response = await chrome.runtime.sendMessage({
-      action,
-      url: currentUrl,
-      title
-    });
-    
-    if (response.success) {
-      showNotification(t('addedToList', { list: listType === 'toRead' ? t('toRead') : t('read') }), 'success');
-      checkCurrentPageStatus();
+    let request;
+    if (role === 'remove') {
+      request = { action: 'removeFromList', url: currentUrl, listType: slot };
+    } else if (role === 'move') {
+      // movePost, not addToRead/addToReadList: those build a fresh post object
+      // and would silently drop the post's labels and note.
+      request = { action: 'movePost', url: currentUrl, fromList: savedStatus, toList: slot };
+    } else {
+      request = {
+        action: slot === 'toRead' ? 'addToRead' : 'addToReadList',
+        url: currentUrl,
+        title: currentTab?.title || currentUrl
+      };
+    }
+
+    const response = await chrome.runtime.sendMessage(request);
+
+    if (response && response.success) {
+      // Re-read rather than assuming: this also refreshes the status line.
+      await checkCurrentPageStatus();
       loadCounts();
     } else {
-      showNotification(response.error || t('failedToAddPost'), 'error');
+      showNotification((response && response.error) || failureMessage(role), 'error');
     }
   } catch (error) {
     showNotification(t('errorPrefix') + error.message, 'error');
   }
 }
 
-// Handle export
-async function handleExport() {
-  try {
-    const response = await chrome.runtime.sendMessage({ action: 'exportData' });
-    if (response.success) {
-      const blob = new Blob([response.data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `motamem-saved-posts-${Date.now()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showNotification(t('exportSuccessful'), 'success');
-    } else {
-      showNotification(t('exportFailed'), 'error');
-    }
-  } catch (error) {
-    showNotification(t('errorPrefix') + error.message, 'error');
-  }
+function failureMessage(role) {
+  if (role === 'remove') return t('failedToRemovePost');
+  if (role === 'move') return t('failedToMovePost');
+  return t('failedToAddPost');
 }
 
-// Handle import
-async function handleImport(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  
-  try {
-    const text = await file.text();
-    const response = await chrome.runtime.sendMessage({
-      action: 'importData',
-      data: text
-    });
-    
-    if (response.success) {
-      showNotification(
-        t('importedPosts', { imported: response.result.imported, skipped: response.result.skipped }),
-        'success'
-      );
-      loadCounts();
-      // Reset file input
-      event.target.value = '';
-    } else {
-      showNotification(response.error || t('importFailed'), 'error');
-    }
-  } catch (error) {
-    showNotification(t('errorPrefix') + error.message, 'error');
-  }
-}
+// Export/import live on the saved-posts page only — the popup is for saving the
+// current page. handleExport/handleImport were removed with their buttons.
 
 // Show notification
 function showNotification(message, type = 'success') {

@@ -27,7 +27,7 @@
   var DICT = {
     en: {
       appTitle: 'Motamem Enhancer',
-      brandName: 'Motamem',
+      brandName: 'Enhanced Motamem',
       brandSub: 'Motamem Enhancer',
       savedPostsTitle: 'Saved Posts · Motamem Enhancer',
       savedPostsHeading: 'Saved Posts',
@@ -117,7 +117,7 @@
     },
     fa: {
       appTitle: 'افزونه متمم',
-      brandName: 'متمم',
+      brandName: 'متمم بهتر',
       brandSub: 'افزونه متمم',
       savedPostsTitle: 'پست‌های ذخیره‌شده · افزونه متمم',
       savedPostsHeading: 'پست‌های ذخیره‌شده',

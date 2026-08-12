@@ -94,7 +94,6 @@ body {
 
 .brand-text { display: flex; flex-direction: column; line-height: 1.15; }
 .brand-text h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
-.brand-sub { font-size: 11.5px; opacity: 0.85; font-weight: 500; }
 
 .theme-toggle {
   margin-inline-start: auto;
@@ -213,6 +212,12 @@ body {
 .btn-toread { background: linear-gradient(135deg, #fbbf24, var(--toread)); }
 .btn-read { background: linear-gradient(135deg, #38c838, var(--read)); }
 
+/* Remove: shown in place of whichever list this page is already saved in.
+   Mirrors .motamem-btn.is-remove on the in-page card. Two classes so it wins
+   over .btn-toread/.btn-read regardless of source order. */
+.action-btn.is-remove { background: linear-gradient(135deg, var(--danger), #dc2626); }
+.action-btn.is-remove:focus-visible { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.45); }
+
 .action-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
@@ -296,46 +301,12 @@ body {
   transition: border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
 }
 
-.view-all svg { width: 17px; height: 17px; transition: transform 0.16s ease; }
 .view-all:hover {
   border-color: var(--brand-1);
   color: var(--brand-1);
   transform: translateY(-1px);
 }
-.view-all:hover svg { transform: translateX(3px); }
 .view-all:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ring); }
-
-/* ── Export / Import ────────────────────────────── */
-.tools {
-  display: flex;
-  gap: 10px;
-}
-
-.tool {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: transparent;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.16s ease;
-}
-
-.tool svg { width: 16px; height: 16px; }
-.tool:hover {
-  background: var(--surface);
-  border-color: var(--brand-1);
-  color: var(--brand-1);
-}
-.tool:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ring); }
 
 /* ── Notification ───────────────────────────────── */
 .notification {
