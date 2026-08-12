@@ -53,7 +53,8 @@ function setupThemeToggle() {
 function updateLangToggle(lang) {
   const btn = document.getElementById('lang-toggle');
   if (!btn) return;
-  btn.textContent = lang === 'fa' ? 'FA' : 'EN';
+  // Label the language the button switches *to*, not the active one.
+  btn.textContent = lang === 'fa' ? 'EN' : 'FA';
   const label = t('langAria');
   btn.title = t('langTitle', { label });
   btn.setAttribute('aria-label', label);
