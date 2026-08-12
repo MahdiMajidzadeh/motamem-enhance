@@ -11,9 +11,17 @@
   --mm-read-2: #38c838;
   --mm-surface: #ffffff;
   --mm-text: #1f2620;
+  --mm-border: #e3e8e3;
+  --mm-remove: #dc2626;     /* red — remove from the list it's saved in */
+  --mm-remove-2: #ef4444;
   --mm-shadow: 0 8px 24px rgba(16, 24, 40, 0.18);
   box-sizing: border-box;
-  font-family: 'Motamem IRANSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Roboto, Arial, sans-serif;
+  /* Use motamem.org's own font. The site registers IRANSans itself, so the
+     face is already loaded and cached by the time we render — matching the
+     page exactly, with no font request and no @font-face of ours injected
+     into the host page. Fallbacks are Persian-capable on purpose: -apple-system
+     has no Arabic glyphs, so listing it here would drop macOS to Geeza Pro. */
+  font-family: 'IRANSans', Tahoma, 'Segoe UI', Arial, sans-serif;
   line-height: 1.2;
   direction: ltr;
 }
@@ -24,11 +32,15 @@
   .motamem-hover-tooltip {
     --mm-surface: #202422;
     --mm-text: #e9efe9;
+    --mm-border: #323a34;
     --mm-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
   }
 }
 
-/* ── Floating action buttons ────────────────────── */
+/* ── Floating action card ───────────────────────── */
+/* A card wrapping the buttons, mirroring the popup's surface treatment
+   (surface colour, 1px border, rounded corners, soft shadow) so the on-page
+   UI and the popup read as the same product. */
 .motamem-enhancer-container {
   position: fixed;
   bottom: 22px;
@@ -36,9 +48,13 @@
   z-index: 2147483000;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   margin: 0;
-  padding: 0;
+  padding: 10px;
+  border: 1px solid var(--mm-border);
+  border-radius: 16px;
+  background: var(--mm-surface);
+  box-shadow: var(--mm-shadow);
 }
 
 .motamem-btn {
@@ -48,7 +64,9 @@
   margin: 0;
   padding: 11px 18px;
   border: none;
-  border-radius: 999px;
+  /* Matches the popup's .action-btn radius — the buttons now sit inside a
+     card, so the old full-round pill shape no longer fits. */
+  border-radius: 11px;
   background: var(--mm-surface);
   color: #fff;
   /* Buttons don't inherit font-family from an ancestor on their own — the UA
@@ -57,9 +75,11 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: var(--mm-shadow);
+  /* No per-button shadow: the card already carries one, and stacking both
+     made the buttons look like they were floating off the card. */
+  box-shadow: none;
   transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
-  min-width: 132px;
+  min-width: 148px;
   justify-content: center;
   -webkit-font-smoothing: antialiased;
 }
@@ -70,17 +90,17 @@
   flex-shrink: 0;
 }
 
-.motamem-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(16, 24, 40, 0.26); filter: brightness(1.05); }
+.motamem-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(16, 24, 40, 0.18); filter: brightness(1.05); }
 .motamem-btn:active { transform: translateY(0); }
+.motamem-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(34, 165, 34, 0.4); }
 
 .motamem-btn-toread { background: linear-gradient(135deg, var(--mm-toread-2), var(--mm-toread)); }
 .motamem-btn-read { background: linear-gradient(135deg, var(--mm-read-2), var(--mm-read)); }
 
-/* Already-saved state */
-.motamem-btn.active {
-  background: linear-gradient(135deg, var(--mm-read-2), var(--mm-read));
-  box-shadow: 0 0 0 3px rgba(34, 165, 34, 0.3), var(--mm-shadow);
-}
+/* Remove: shown in place of whichever list this page is already saved in.
+   Two classes, so it wins over .motamem-btn-toread/-read regardless of order. */
+.motamem-btn.is-remove { background: linear-gradient(135deg, var(--mm-remove-2), var(--mm-remove)); }
+.motamem-btn.is-remove:focus-visible { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.45); }
 
 .motamem-btn span { font-size: 14px; font-weight: 600; }
 

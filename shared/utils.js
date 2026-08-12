@@ -105,9 +105,27 @@ function isExcludedMotamemUrl(input) {
   if (path.includes('/comment-page-')) return true;
 
   // Exact pages (trailing slash already stripped above).
+  //
+  // motamem.org serves articles and ordinary site pages at the same depth — a
+  // single slug — so nothing in the URL itself separates them and these have to
+  // be listed. Note a slug's language is no guide: /okr/ is a real article
+  // while /about/ is not.
   const EXACT = [
     '/whiteboard',
     '/search',
+    '/about',
+    '/goal',
+    '/insights',
+    '/roadmaps',
+    '/testimonials',
+    '/faq',
+    '/mpro',
+    '/branding',
+    '/%d8%aa%d9%85%d8%a7%d8%b3-%d8%a8%d8%a7-%d9%85%d8%a7',                    // تماس با ما
+    '/%d8%af%d8%b1%d8%a8%d8%a7%d8%b1%d9%87-%d9%85%d8%aa%d9%85%d9%85',         // درباره متمم
+    '/%d8%b4%d8%b1%d8%a7%db%8c%d8%b7-%d8%ab%d8%a8%d8%aa-%d9%86%d8%a7%d9%85',  // شرایط ثبت نام
+    // دانلود فایل صوتی رادیو متمم 2
+    '/%d8%af%d8%a7%d9%86%d9%84%d9%88%d8%af-%d9%81%d8%a7%db%8c%d9%84-%d8%b5%d9%88%d8%aa%db%8c-%d8%b1%d8%a7%d8%af%db%8c%d9%88-%d9%85%d8%aa%d9%85%d9%85-2',
     '/%d9%82%d9%84%d8%a8-%d8%b3%d8%a8%d8%b2',                                                         // قلب سبز
     '/%d8%ab%d8%a8%d8%aa-%d9%86%d8%a7%d9%85-%da%a9%d8%a7%d8%b1%d8%a8%d8%b1-%d9%88%db%8c%da%98%d9%87',  // ثبت‌نام کاربر ویژه
     '/%d9%81%d8%b1%d9%88%d8%b4%da%af%d8%a7%d9%87-%d9%85%d8%aa%d9%85%d9%85'                             // فروشگاه متمم

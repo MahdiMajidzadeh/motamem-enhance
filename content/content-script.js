@@ -34,7 +34,24 @@
   // a follow-up update shortly after the buttons first render.
   const t = (key, vars) => (window.MMI18n ? window.MMI18n.t(key, vars) : key);
 
-  // Create floating action buttons
+  const ICON_TOREAD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.5A2.5 2.5 0 0 1 4.5 3H11v16H4.5A2.5 2.5 0 0 0 2 21.5z"/><path d="M22 5.5A2.5 2.5 0 0 0 19.5 3H13v16h6.5a2.5 2.5 0 0 1 2.5 2.5z"/></svg>';
+  const ICON_READ = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.2 7 10 18.2 4.8 13"/></svg>';
+  const ICON_REMOVE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+
+  // Which list this page is currently saved in: null | 'toRead' | 'read'.
+  let savedStatus = null;
+
+  // Each button owns a fixed slot ('toRead' or 'read'); what it *does* depends
+  // on where the page is currently saved:
+  //   saved in this slot   -> 'remove' (take it out of that list)
+  //   saved in the other   -> 'move'   (move it over, keeping labels/notes)
+  //   not saved at all     -> 'add'
+  function roleFor(slot) {
+    if (savedStatus === slot) return 'remove';
+    return savedStatus ? 'move' : 'add';
+  }
+
+  // Create the floating action card
   function createFloatingButtons() {
     // Don't offer to save pages that are on the exclusion list.
     if (typeof isExcludedMotamemUrl === 'function' && isExcludedMotamemUrl(window.location.href)) {
@@ -44,37 +61,61 @@
     // Remove existing buttons if any
     const existing = document.getElementById('motamem-enhancer-buttons');
     if (existing) existing.remove();
-    
+
     const container = document.createElement('div');
     container.id = 'motamem-enhancer-buttons';
     container.className = 'motamem-enhancer-container';
-    
-    const ICON_TOREAD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.5A2.5 2.5 0 0 1 4.5 3H11v16H4.5A2.5 2.5 0 0 0 2 21.5z"/><path d="M22 5.5A2.5 2.5 0 0 0 19.5 3H13v16h6.5a2.5 2.5 0 0 1 2.5 2.5z"/></svg>';
-    const ICON_READ = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.2 7 10 18.2 4.8 13"/></svg>';
 
     const toReadBtn = document.createElement('button');
     toReadBtn.className = 'motamem-btn motamem-btn-toread';
-    toReadBtn.innerHTML = ICON_TOREAD + '<span>' + t('toRead') + '</span>';
-    toReadBtn.title = t('addToToReadTitle');
 
     const readBtn = document.createElement('button');
     readBtn.className = 'motamem-btn motamem-btn-read';
-    readBtn.innerHTML = ICON_READ + '<span>' + t('read') + '</span>';
-    readBtn.title = t('addToReadTitle');
-    
+
     container.appendChild(toReadBtn);
     container.appendChild(readBtn);
     document.body.appendChild(container);
-    
-    // Check current status
+
+    toReadBtn.addEventListener('click', () => handleSlotClick('toRead'));
+    readBtn.addEventListener('click', () => handleSlotClick('read'));
+
+    // Paint the not-saved state immediately, then correct it once storage answers.
+    renderButtons();
     checkPostStatus();
-    
-    // Add event listeners
-    toReadBtn.addEventListener('click', () => handleAddToList('toRead'));
-    readBtn.addEventListener('click', () => handleAddToList('read'));
   }
-  
-  // Check if current post is already saved
+
+  // Paint both buttons for the current savedStatus. Safe to call any time —
+  // on first render, after an action, and when the language changes.
+  function renderButtons() {
+    const container = document.getElementById('motamem-enhancer-buttons');
+    if (!container) return;
+    renderSlot(container.querySelector('.motamem-btn-toread'), 'toRead');
+    renderSlot(container.querySelector('.motamem-btn-read'), 'read');
+  }
+
+  function renderSlot(btn, slot) {
+    if (!btn) return;
+    const isRemove = roleFor(slot) === 'remove';
+    const isToRead = slot === 'toRead';
+
+    // Label/icon text comes from our own dictionary, never from the page.
+    const icon = isRemove ? ICON_REMOVE : (isToRead ? ICON_TOREAD : ICON_READ);
+    const label = isRemove ? t('remove') : (isToRead ? t('toRead') : t('read'));
+    btn.innerHTML = icon + '<span>' + label + '</span>';
+
+    btn.classList.toggle('is-remove', isRemove);
+    btn.title = titleFor(slot, isRemove);
+  }
+
+  function titleFor(slot, isRemove) {
+    const isToRead = slot === 'toRead';
+    if (isRemove) return isToRead ? t('removeFromToReadTitle') : t('removeFromReadTitle');
+    // Saved in the other list, so this button moves it rather than adding.
+    if (savedStatus) return isToRead ? t('moveToToRead') : t('markAsRead');
+    return isToRead ? t('addToToReadTitle') : t('addToReadTitle');
+  }
+
+  // Check which list (if any) the current post is already saved in
   async function checkPostStatus() {
     if (!isExtensionContextValid()) return;
     try {
@@ -83,17 +124,9 @@
         url: currentUrl
       });
 
-      if (response.success && response.status) {
-        const container = document.getElementById('motamem-enhancer-buttons');
-        if (container) {
-          if (response.status === 'toRead') {
-            container.classList.add('status-toread');
-            container.querySelector('.motamem-btn-toread').classList.add('active');
-          } else if (response.status === 'read') {
-            container.classList.add('status-read');
-            container.querySelector('.motamem-btn-read').classList.add('active');
-          }
-        }
+      if (response && response.success) {
+        savedStatus = (response.status === 'toRead' || response.status === 'read') ? response.status : null;
+        renderButtons();
       }
     } catch (error) {
       // Orphaned content script after an extension reload: expected, not a bug.
@@ -101,34 +134,56 @@
       console.error('Error checking post status:', error);
     }
   }
-  
-  // Handle adding to list
-  async function handleAddToList(listType) {
+
+  // Add / move / remove, depending on what the clicked slot currently means.
+  // Deliberately silent on success: the button flipping to or from Remove is
+  // the feedback. Only real failures raise a notification.
+  async function handleSlotClick(slot) {
     if (!isExtensionContextValid()) {
       showNotification(t('extensionReloaded'), true);
       return;
     }
+
+    const role = roleFor(slot);
     try {
-      const title = extractPostTitle();
-      const action = listType === 'toRead' ? 'addToRead' : 'addToReadList';
-      
-      const response = await chrome.runtime.sendMessage({
-        action,
-        url: currentUrl,
-        title
-      });
-      
-      if (response.success) {
-        showNotification(t('addedToList', { list: listType === 'toRead' ? t('toRead') : t('read') }));
-        checkPostStatus();
+      let request;
+      if (role === 'remove') {
+        request = { action: 'removeFromList', url: currentUrl, listType: slot };
+      } else if (role === 'move') {
+        // movePost, not addToRead/addToReadList: those two build a fresh post
+        // object and would silently drop the post's labels and note.
+        request = { action: 'movePost', url: currentUrl, fromList: savedStatus, toList: slot };
       } else {
-        showNotification(response.error || t('failedToAddPost'), true);
+        request = {
+          action: slot === 'toRead' ? 'addToRead' : 'addToReadList',
+          url: currentUrl,
+          title: extractPostTitle()
+        };
+      }
+
+      const response = await chrome.runtime.sendMessage(request);
+
+      if (response && response.success) {
+        savedStatus = role === 'remove' ? null : slot;
+        renderButtons();
+      } else {
+        showNotification((response && response.error) || failureMessage(role), true);
       }
     } catch (error) {
+      if (isContextInvalidatedError(error)) {
+        showNotification(t('extensionReloaded'), true);
+        return;
+      }
       showNotification(t('errorPrefix') + error.message, true);
     }
   }
-  
+
+  function failureMessage(role) {
+    if (role === 'remove') return t('failedToRemovePost');
+    if (role === 'move') return t('failedToMovePost');
+    return t('failedToAddPost');
+  }
+
   // Extract post title from page.
   // Ordered most-specific to least. The old [class*="title"] matcher was
   // dropped because it also matched sidebar/widget/nav elements (e.g.
@@ -186,6 +241,41 @@
   ];
   const ASSET_EXT = /\.(jpe?g|png|gif|svg|webp|bmp|ico|pdf|zip|rar|mp3|mp4|wav|css|js|xml|json|txt)$/i;
 
+  // Where a link SITS matters more than what its URL looks like: motamem.org
+  // gives articles and ordinary pages the same single-slug URL shape, so the
+  // DOM is the only signal that generalises as the site grows.
+
+  // Site chrome — menus, sidebars, footer widgets, forms. Never articles.
+  // '.widget' is the workhorse: the footer nav menu (li.menu-item) and the
+  // sidebar link blocks (.su-button-center, .textwidget) both sit inside one.
+  const BLOCKED_LINK_CONTEXT = [
+    '.ubermenu',          // main mega-menu
+    '.widget',            // sidebar + footer widgets
+    '.widget-container',
+    '.sue-panel',         // the about/goal/insights/roadmaps panel
+    'nav', 'footer', 'aside', 'form'
+  ].join(',');
+
+  // Containers that genuinely hold article links. '.post' covers the most
+  // ground: it wraps both the cards on listing pages (div.post.post-box) and
+  // the single-post body (div.post.post-single), so in-article prose links are
+  // included. The series box, related-posts block and homepage index box sit
+  // outside .post and need naming separately.
+  const ARTICLE_LINK_CONTEXT = [
+    '.post', 'article', '.hentry',
+    '.serieslist-ul',     // "parts of this series" list inside a lesson
+    '.related_post',      // related-posts block
+    '.box-index'          // curated article index on the homepage
+  ].join(',');
+
+  // A link must be outside all site chrome AND inside a real article container.
+  function isSaveableLinkContext(linkEl) {
+    // Without closest() we can't judge context; fall back to the URL rules.
+    if (typeof linkEl.closest !== 'function') return true;
+    if (linkEl.closest(BLOCKED_LINK_CONTEXT)) return false;
+    return Boolean(linkEl.closest(ARTICLE_LINK_CONTEXT));
+  }
+
   function isPostUrl(linkEl) {
     let url;
     try {
@@ -198,8 +288,8 @@
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
     if (url.hostname !== window.location.hostname) return false;
 
-    // Links inside the site's nav menu are never saveable.
-    if (linkEl.closest && linkEl.closest('.ubermenu')) return false;
+    // Judge the link by where it sits in the page, not just its URL.
+    if (!isSaveableLinkContext(linkEl)) return false;
 
     // Explicitly excluded pages (profiles, shop, search, comment pages, …).
     if (typeof isExcludedMotamemUrl === 'function' && isExcludedMotamemUrl(url)) return false;
@@ -275,11 +365,12 @@
             title
           });
           
-          if (response.success) {
-            showNotification(t('addedToList', { list: action === 'toRead' ? t('toRead') : t('read') }));
-          } else {
+          if (!response.success) {
             showNotification(response.error || t('failedToAdd'), true);
           }
+          // Silent on success, matching the floating card. No card update is
+          // needed: isPostUrl() rejects links to the page we're already on,
+          // so the tooltip never targets the current post.
         } catch (error) {
           showNotification(t('errorPrefix') + error.message, true);
         }
@@ -366,20 +457,7 @@
   // buttons' text either way; the tooltip is ephemeral so it just picks up
   // the current language next time it's created.
   window.addEventListener('mm-i18n-ready', () => {
-    const container = document.getElementById('motamem-enhancer-buttons');
-    if (!container) return;
-    const toReadBtn = container.querySelector('.motamem-btn-toread');
-    const readBtn = container.querySelector('.motamem-btn-read');
-    if (toReadBtn) {
-      const span = toReadBtn.querySelector('span');
-      if (span) span.textContent = t('toRead');
-      toReadBtn.title = t('addToToReadTitle');
-    }
-    if (readBtn) {
-      const span = readBtn.querySelector('span');
-      if (span) span.textContent = t('read');
-      readBtn.title = t('addToReadTitle');
-    }
+    renderButtons();
   });
   
   // Re-check status when page becomes visible. If the extension has since been

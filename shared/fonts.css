@@ -1,16 +1,18 @@
-/* Bundled IRANSansWeb, shared by the popup, the saved-posts page, and the
-   content script. Fonts ship with the extension (assets/fonts/) rather than
+/* Bundled IRANSansWeb for the extension's own pages — the popup and the
+   saved-posts page. Fonts ship with the extension (assets/fonts/) rather than
    loading from a CDN, so the UI renders identically offline and the extension
    never makes a network request just to draw itself.
 
-   The family is deliberately named "Motamem IRANSans" rather than
-   "IRANSansWeb": this stylesheet is also injected into motamem.org by the
-   content script, where an @font-face rule is page-global. A namespaced name
-   can't collide with — or override — whatever the host page defines for its
-   own text.
+   Not used by the content script: the buttons injected into motamem.org use
+   the site's own IRANSans (see content/content-script.css), which is already
+   loaded there. That keeps our UI matching the page and keeps this @font-face
+   out of the host document entirely.
 
-   url()s are relative to this file (shared/), which resolves correctly from
-   the extension pages and from the content-script injection alike.
+   The family stays namespaced as "Motamem IRANSans" to keep it distinct from
+   the plain "IRANSans" the site registers, so the two can never be confused
+   for one another.
+
+   url()s are relative to this file (shared/).
 
    IRANSansWeb's six cuts are mapped onto the CSS weight scale below. The UI
    also asks for 600 and 800, which CSS weight matching resolves upward to
