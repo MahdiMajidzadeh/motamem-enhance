@@ -245,15 +245,19 @@
   // gives articles and ordinary pages the same single-slug URL shape, so the
   // DOM is the only signal that generalises as the site grows.
 
-  // Site chrome — menus, sidebars, footer widgets, forms. Never articles.
-  // '.widget' is the workhorse: the footer nav menu (li.menu-item) and the
-  // sidebar link blocks (.su-button-center, .textwidget) both sit inside one.
+  // Site chrome — menus, panels, forms. Never articles.
+  //
+  // Deliberately NOT blocking '.widget' wholesale: the sidebar's lessons index
+  // is a widget too (li.widget.widget_black_studio_tinymce > .textwidget) and
+  // holds ~47 genuine article links on every page. Blocking the whole widget
+  // family threw all of those away. Only the nav-menu widget is excluded, and
+  // the slug blocklist in shared/utils.js catches the handful of site pages
+  // that do appear in the sidebar (/mpro/, ثبت‌نام کاربر ویژه, …).
   const BLOCKED_LINK_CONTEXT = [
     '.ubermenu',          // main mega-menu
-    '.widget',            // sidebar + footer widgets
-    '.widget-container',
+    '.widget_nav_menu',   // footer menu widget — site pages, not articles
     '.sue-panel',         // the about/goal/insights/roadmaps panel
-    'nav', 'footer', 'aside', 'form'
+    'nav', 'footer', 'form'
   ].join(',');
 
   // Containers that genuinely hold article links. '.post' covers the most
@@ -265,7 +269,8 @@
     '.post', 'article', '.hentry',
     '.serieslist-ul',     // "parts of this series" list inside a lesson
     '.related_post',      // related-posts block
-    '.box-index'          // curated article index on the homepage
+    '.box-index',         // curated article index on the homepage
+    '.textwidget'         // sidebar lessons index — mostly article links
   ].join(',');
 
   // A link must be outside all site chrome AND inside a real article container.
