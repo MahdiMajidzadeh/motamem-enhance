@@ -42,8 +42,38 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           break;
           
         case 'getAllPosts':
-          const result = await getAllPosts(request.listType, request.page, request.pageSize);
+          const result = await getAllPosts(request.listType, request.page, request.pageSize, request.labelFilter, request.searchQuery);
           sendResponse({ success: true, data: result });
+          break;
+
+        case 'getLabels':
+          const labels = await getLabels();
+          sendResponse({ success: true, labels });
+          break;
+
+        case 'setPostLabels':
+          const updatedPost = await setPostLabels(request.url, request.listType, request.labels);
+          sendResponse({ success: true, post: updatedPost });
+          break;
+
+        case 'deleteLabel':
+          await deleteLabel(request.name);
+          sendResponse({ success: true });
+          break;
+
+        case 'setPostNote':
+          const notedPost = await setPostNote(request.url, request.listType, request.note);
+          sendResponse({ success: true, post: notedPost });
+          break;
+
+        case 'getMonthlyStats':
+          const stats = await getMonthlyStats(request.month);
+          sendResponse({ success: true, data: stats });
+          break;
+
+        case 'getMonthlyStatsSeries':
+          const series = await getMonthlyStatsSeries(request.endMonth, request.monthsCount);
+          sendResponse({ success: true, data: series });
           break;
           
         case 'getPostStatus':

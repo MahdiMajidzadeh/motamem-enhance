@@ -1,18 +1,32 @@
 // Shared utility functions
 
 /**
- * Format timestamp to readable date string
+ * Format timestamp to a readable, localized date string.
+ * lang: 'en' (default) or 'fa' — Persian output uses Persian digits and
+ * month names, but keeps the Gregorian calendar (no Jalali conversion).
  */
-function formatDate(timestamp) {
+function formatDate(timestamp, lang) {
+  lang = lang === 'fa' ? 'fa' : 'en';
   const date = new Date(timestamp);
   const now = new Date();
   const diff = now - date;
-  
+
   const seconds = Math.floor(diff / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
-  
+
+  const FA_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  const num = (v) => (lang === 'fa' ? String(v).replace(/[0-9]/g, d => FA_DIGITS[d]) : String(v));
+
+  if (lang === 'fa') {
+    if (seconds < 60) return 'همین الان';
+    if (minutes < 60) return `${num(minutes)} دقیقه پیش`;
+    if (hours < 24) return `${num(hours)} ساعت پیش`;
+    if (days < 7) return `${num(days)} روز پیش`;
+    return date.toLocaleDateString('fa-IR-u-ca-gregory', { year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
   if (seconds < 60) {
     return 'Just now';
   } else if (minutes < 60) {
@@ -22,7 +36,7 @@ function formatDate(timestamp) {
   } else if (days < 7) {
     return `${days} day${days > 1 ? 's' : ''} ago`;
   } else {
-    return date.toLocaleDateString();
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   }
 }
 
@@ -32,6 +46,18 @@ function formatDate(timestamp) {
 function truncateText(text, maxLength = 100) {
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength) + '...';
+}
+
+/**
+ * Color for the nth saved label (by position in the user's label list).
+ * Colors are assigned by index — not by hashing the name — using a
+ * golden-angle hue step, which guarantees every label gets a distinct hue.
+ * Two different names can never collide on the same color the way a small
+ * fixed hash-to-palette table could.
+ */
+function labelColorForIndex(index) {
+  const hue = ((index * 137.508) % 360 + 360) % 360; // golden angle ≈ 137.508°
+  return `hsl(${hue.toFixed(0)}, 65%, 45%)`;
 }
 
 /**

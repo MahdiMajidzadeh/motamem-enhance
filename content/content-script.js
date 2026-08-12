@@ -28,7 +28,12 @@
   function isContextInvalidatedError(error) {
     return error && /Extension context invalidated/i.test(error.message || '');
   }
-  
+
+  // MMI18n (shared/i18n.js) resolves language asynchronously here (this page
+  // has no localStorage bridge to the extension's origin), so text may need
+  // a follow-up update shortly after the buttons first render.
+  const t = (key, vars) => (window.MMI18n ? window.MMI18n.t(key, vars) : key);
+
   // Create floating action buttons
   function createFloatingButtons() {
     // Don't offer to save pages that are on the exclusion list.
@@ -49,13 +54,13 @@
 
     const toReadBtn = document.createElement('button');
     toReadBtn.className = 'motamem-btn motamem-btn-toread';
-    toReadBtn.innerHTML = ICON_TOREAD + '<span>To Read</span>';
-    toReadBtn.title = 'Add to To Read list';
+    toReadBtn.innerHTML = ICON_TOREAD + '<span>' + t('toRead') + '</span>';
+    toReadBtn.title = t('addToToReadTitle');
 
     const readBtn = document.createElement('button');
     readBtn.className = 'motamem-btn motamem-btn-read';
-    readBtn.innerHTML = ICON_READ + '<span>Read</span>';
-    readBtn.title = 'Add to Read list';
+    readBtn.innerHTML = ICON_READ + '<span>' + t('read') + '</span>';
+    readBtn.title = t('addToReadTitle');
     
     container.appendChild(toReadBtn);
     container.appendChild(readBtn);
@@ -100,7 +105,7 @@
   // Handle adding to list
   async function handleAddToList(listType) {
     if (!isExtensionContextValid()) {
-      showNotification('Extension was reloaded — please refresh the page', true);
+      showNotification(t('extensionReloaded'), true);
       return;
     }
     try {
@@ -114,13 +119,13 @@
       });
       
       if (response.success) {
-        showNotification(`Added to ${listType === 'toRead' ? 'To Read' : 'Read'} list`);
+        showNotification(t('addedToList', { list: listType === 'toRead' ? t('toRead') : t('read') }));
         checkPostStatus();
       } else {
-        showNotification(response.error || 'Failed to add post', true);
+        showNotification(response.error || t('failedToAddPost'), true);
       }
     } catch (error) {
-      showNotification('Error: ' + error.message, true);
+      showNotification(t('errorPrefix') + error.message, true);
     }
   }
   
@@ -230,11 +235,11 @@
     tooltip.innerHTML = `
       <button class="motamem-hover-btn" data-action="toRead">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.5A2.5 2.5 0 0 1 4.5 3H11v16H4.5A2.5 2.5 0 0 0 2 21.5z"/><path d="M22 5.5A2.5 2.5 0 0 0 19.5 3H13v16h6.5a2.5 2.5 0 0 1 2.5 2.5z"/></svg>
-        <span>To Read</span>
+        <span>${t('toRead')}</span>
       </button>
       <button class="motamem-hover-btn" data-action="read">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.2 7 10 18.2 4.8 13"/></svg>
-        <span>Read</span>
+        <span>${t('read')}</span>
       </button>
     `;
     
@@ -257,7 +262,7 @@
         const title = link.textContent.trim() || link.href;
 
         if (!isExtensionContextValid()) {
-          showNotification('Extension was reloaded — please refresh the page', true);
+          showNotification(t('extensionReloaded'), true);
           hideHoverTooltip();
           return;
         }
@@ -271,12 +276,12 @@
           });
           
           if (response.success) {
-            showNotification(`Added to ${action === 'toRead' ? 'To Read' : 'Read'} list`);
+            showNotification(t('addedToList', { list: action === 'toRead' ? t('toRead') : t('read') }));
           } else {
-            showNotification(response.error || 'Failed to add', true);
+            showNotification(response.error || t('failedToAdd'), true);
           }
         } catch (error) {
-          showNotification('Error: ' + error.message, true);
+          showNotification(t('errorPrefix') + error.message, true);
         }
         
         hideHoverTooltip();
@@ -353,6 +358,29 @@
     createFloatingButtons();
     setupLinkHover();
   }
+
+  // MMI18n resolves the real language from chrome.storage asynchronously
+  // (this page has no localStorage bridge to the extension's origin), and
+  // it can also change live if the user flips the toggle in the popup or
+  // saved-posts tab while this page is open. Re-render the floating
+  // buttons' text either way; the tooltip is ephemeral so it just picks up
+  // the current language next time it's created.
+  window.addEventListener('mm-i18n-ready', () => {
+    const container = document.getElementById('motamem-enhancer-buttons');
+    if (!container) return;
+    const toReadBtn = container.querySelector('.motamem-btn-toread');
+    const readBtn = container.querySelector('.motamem-btn-read');
+    if (toReadBtn) {
+      const span = toReadBtn.querySelector('span');
+      if (span) span.textContent = t('toRead');
+      toReadBtn.title = t('addToToReadTitle');
+    }
+    if (readBtn) {
+      const span = readBtn.querySelector('span');
+      if (span) span.textContent = t('read');
+      readBtn.title = t('addToReadTitle');
+    }
+  });
   
   // Re-check status when page becomes visible. If the extension has since been
   // reloaded, this script is orphaned — stop listening so we don't keep firing

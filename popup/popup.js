@@ -3,6 +3,8 @@
 let currentTab = null;
 let currentUrl = null;
 
+const t = (key, vars) => (window.MMI18n ? window.MMI18n.t(key, vars) : key);
+
 // ── Theme switcher ─────────────────────────────────
 // Cycles System → Light → Dark. MMTheme (shared/theme.js) persists the
 // choice and applies it to <html>; the same key is read by the saved-posts
@@ -16,14 +18,14 @@ const THEME_ICONS = {
   // moon (dark)
   dark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>'
 };
-const THEME_LABELS = { system: 'System', light: 'Light', dark: 'Dark' };
 
 function updateThemeToggle(theme) {
   const btn = document.getElementById('theme-toggle');
   if (!btn) return;
   btn.innerHTML = THEME_ICONS[theme] || THEME_ICONS.system;
-  const label = `Theme: ${THEME_LABELS[theme] || 'System'}`;
-  btn.title = `${label} — click to change`;
+  const themeLabelKey = { system: 'themeSystem', light: 'themeLight', dark: 'themeDark' }[theme] || 'themeSystem';
+  const label = t(themeLabelKey);
+  btn.title = t('themeTitle', { label });
   btn.setAttribute('aria-label', label);
 }
 
@@ -41,9 +43,50 @@ function setupThemeToggle() {
   });
 }
 
+// ── Language switcher ──────────────────────────────
+// Toggles fa ↔ en. MMI18n (shared/i18n.js) persists the choice and sets
+// <html lang/dir>; the same preference is read by the saved-posts page and
+// (best-effort) the content script so all surfaces stay in sync.
+function updateLangToggle(lang) {
+  const btn = document.getElementById('lang-toggle');
+  if (!btn) return;
+  btn.textContent = lang === 'fa' ? 'FA' : 'EN';
+  const label = t('langAria');
+  btn.title = t('langTitle', { label });
+  btn.setAttribute('aria-label', label);
+}
+
+function setupLangToggle() {
+  const current = window.MMI18n ? window.MMI18n.get() : 'fa';
+  updateLangToggle(current);
+
+  const btn = document.getElementById('lang-toggle');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const cur = window.MMI18n ? window.MMI18n.get() : 'fa';
+    const next = cur === 'fa' ? 'en' : 'fa';
+    if (window.MMI18n) window.MMI18n.set(next);
+    updateLangToggle(next);
+    updateThemeToggle(window.MMTheme ? window.MMTheme.get() : 'system');
+    // Re-run anything that shows dynamic (non data-i18n) text.
+    refreshDynamicText();
+    loadCounts();
+  });
+}
+
+// Re-render bits of UI that showStatus()/notifications etc. already wrote in
+// the previous language, so a language switch doesn't leave stale text.
+function refreshDynamicText() {
+  if (currentUrl) {
+    checkCurrentPageStatus();
+  }
+}
+
 // Initialize popup
 async function init() {
+  if (window.MMI18n) window.MMI18n.translatePage();
   setupThemeToggle();
+  setupLangToggle();
 
   // Get current tab
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -55,16 +98,16 @@ async function init() {
     try {
       const url = new URL(currentUrl);
       if (!url.hostname.includes('motamem.org')) {
-        showStatus('Not on Motamem blog', false);
+        showStatus(t('notOnBlog'), false);
         disableActions();
       } else if (typeof isExcludedMotamemUrl === 'function' && isExcludedMotamemUrl(url)) {
-        showStatus("This page can't be saved", false);
+        showStatus(t('pageCannotBeSaved'), false);
         disableActions();
       } else {
         checkCurrentPageStatus();
       }
     } catch {
-      showStatus('Invalid URL', false);
+      showStatus(t('invalidUrl'), false);
       disableActions();
     }
   }
@@ -86,16 +129,16 @@ async function checkCurrentPageStatus() {
     
     if (response.success) {
       if (response.status === 'toRead') {
-        showStatus('Already in To Read list', true);
+        showStatus(t('alreadyInToRead'), true);
       } else if (response.status === 'read') {
-        showStatus('Already in Read list', true);
+        showStatus(t('alreadyInRead'), true);
       } else {
-        showStatus('Not saved yet', false);
+        showStatus(t('notSavedYet'), false);
       }
     }
   } catch (error) {
     console.error('Error checking status:', error);
-    showStatus('Error checking status', false);
+    showStatus(t('errorCheckingStatus'), false);
   }
 }
 
@@ -118,8 +161,9 @@ async function loadCounts() {
   try {
     const response = await chrome.runtime.sendMessage({ action: 'getCounts' });
     if (response.success) {
-      document.getElementById('toread-count').textContent = response.counts.toRead;
-      document.getElementById('read-count').textContent = response.counts.read;
+      const n = window.MMI18n ? window.MMI18n.n : String;
+      document.getElementById('toread-count').textContent = n(response.counts.toRead);
+      document.getElementById('read-count').textContent = n(response.counts.read);
     }
   } catch (error) {
     console.error('Error loading counts:', error);
@@ -171,14 +215,14 @@ async function addToList(listType) {
     });
     
     if (response.success) {
-      showNotification(`Added to ${listType === 'toRead' ? 'To Read' : 'Read'} list`, 'success');
+      showNotification(t('addedToList', { list: listType === 'toRead' ? t('toRead') : t('read') }), 'success');
       checkCurrentPageStatus();
       loadCounts();
     } else {
-      showNotification(response.error || 'Failed to add post', 'error');
+      showNotification(response.error || t('failedToAddPost'), 'error');
     }
   } catch (error) {
-    showNotification('Error: ' + error.message, 'error');
+    showNotification(t('errorPrefix') + error.message, 'error');
   }
 }
 
@@ -194,12 +238,12 @@ async function handleExport() {
       a.download = `motamem-saved-posts-${Date.now()}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      showNotification('Export successful', 'success');
+      showNotification(t('exportSuccessful'), 'success');
     } else {
-      showNotification('Export failed', 'error');
+      showNotification(t('exportFailed'), 'error');
     }
   } catch (error) {
-    showNotification('Error: ' + error.message, 'error');
+    showNotification(t('errorPrefix') + error.message, 'error');
   }
 }
 
@@ -217,17 +261,17 @@ async function handleImport(event) {
     
     if (response.success) {
       showNotification(
-        `Imported ${response.result.imported} posts, skipped ${response.result.skipped} duplicates`,
+        t('importedPosts', { imported: response.result.imported, skipped: response.result.skipped }),
         'success'
       );
       loadCounts();
       // Reset file input
       event.target.value = '';
     } else {
-      showNotification(response.error || 'Import failed', 'error');
+      showNotification(response.error || t('importFailed'), 'error');
     }
   } catch (error) {
-    showNotification('Error: ' + error.message, 'error');
+    showNotification(t('errorPrefix') + error.message, 'error');
   }
 }
 
@@ -244,4 +288,3 @@ function showNotification(message, type = 'success') {
 
 // Initialize on load
 init();
-
